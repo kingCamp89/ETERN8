@@ -1,0 +1,127 @@
+{
+  "name": "Executor",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "description": "ID of the user who designated this executor"
+    },
+    "full_name": {
+      "type": "string",
+      "description": "Full name of the executor"
+    },
+    "email": {
+      "type": "string",
+      "description": "Email address of the executor"
+    },
+    "phone": {
+      "type": "string",
+      "description": "Phone number of the executor"
+    },
+    "relationship": {
+      "type": "string",
+      "description": "Relationship to the user"
+    },
+    "role": {
+      "type": "string",
+      "enum": [
+        "primary",
+        "secondary",
+        "legal_representative"
+      ],
+      "default": "primary",
+      "description": "Executor role"
+    },
+    "verification_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "verified",
+        "revoked"
+      ],
+      "default": "pending",
+      "description": "Identity verification status \u2014 must be verified before acting"
+    },
+    "can_approve_release": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether this executor can approve the final release"
+    },
+    "can_pause_release": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether this executor can pause the release process"
+    },
+    "can_cancel_release": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether this executor can cancel the release process"
+    },
+    "verification_token_hash": {
+      "type": "string",
+      "description": "Hashed identity verification token (single-use, for proving identity only)"
+    },
+    "verification_token_expires_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the identity verification token expires"
+    },
+    "verified_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the executor verified their identity"
+    },
+    "revoked_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the executor was revoked"
+    },
+    "approval_token_hash": {
+      "type": "string",
+      "description": "Hashed approval request token (single-use, for authorizing release \u2014 separate from verification)"
+    },
+    "approval_token_expires_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the approval token expires"
+    },
+    "approval_requested_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the approval request was sent"
+    },
+    "approval_completed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the executor completed the approval action"
+    },
+    "failed_attempt_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of failed token verification attempts (rate limiting)"
+    },
+    "last_failed_attempt_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the last failed attempt occurred"
+    }
+  },
+  "required": [
+    "user_id",
+    "full_name",
+    "email",
+    "role"
+  ],
+  "rls": {
+    "create": {},
+    "read": {
+      "user_id": "{{user.id}}"
+    },
+    "update": {
+      "created_by_id": "{{user.id}}"
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    }
+  }
+}

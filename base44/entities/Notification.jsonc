@@ -1,0 +1,68 @@
+{
+  "name": "Notification",
+  "type": "object",
+  "properties": {
+    "type": {
+      "type": "string",
+      "enum": [
+        "like",
+        "comment",
+        "share",
+        "tag",
+        "friend_request",
+        "group_invite"
+      ],
+      "description": "Type of notification"
+    },
+    "message": {
+      "type": "string",
+      "description": "Human-readable notification message"
+    },
+    "from_user_id": {
+      "type": "string",
+      "description": "User who triggered the notification"
+    },
+    "from_user_name": {
+      "type": "string",
+      "description": "Name of the user who triggered"
+    },
+    "from_user_photo": {
+      "type": "string",
+      "description": "Photo of the user who triggered"
+    },
+    "to_user_id": {
+      "type": "string",
+      "description": "User who should receive this notification"
+    },
+    "memory_id": {
+      "type": "string",
+      "description": "Related memory ID (if applicable)"
+    },
+    "group_id": {
+      "type": "string",
+      "description": "Related group ID (if applicable)"
+    },
+    "is_read": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether the notification has been read"
+    }
+  },
+  "required": [
+    "type",
+    "message",
+    "to_user_id"
+  ],
+  "rls": {
+    "create": {},
+    "read": {
+      "to_user_id": "{{user.id}}"
+    },
+    "update": {
+      "to_user_id": "{{user.id}}"
+    },
+    "delete": {
+      "to_user_id": "{{user.id}}"
+    }
+  }
+}

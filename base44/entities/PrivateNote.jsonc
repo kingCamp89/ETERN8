@@ -1,0 +1,62 @@
+{
+  "name": "PrivateNote",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Title of the note"
+    },
+    "content": {
+      "type": "string",
+      "description": "Note content"
+    },
+    "subject_friend_id": {
+      "type": "string",
+      "description": "ID of the friend this note is about"
+    },
+    "subject_friend_name": {
+      "type": "string",
+      "description": "Name of the friend this note is about"
+    },
+    "emotion": {
+      "type": "string",
+      "enum": [
+        "love",
+        "pride",
+        "joy",
+        "gratitude",
+        "nostalgia",
+        "hope",
+        "strength",
+        "reflection",
+        "milestone",
+        "funny"
+      ],
+      "description": "Emotion associated with this note"
+    },
+    "visibility": {
+      "type": "string",
+      "enum": [
+        "private_only"
+      ],
+      "default": "private_only",
+      "description": "Always private - only the creator can see this"
+    }
+  },
+  "required": [
+    "title",
+    "subject_friend_id"
+  ],
+  "rls": {
+    "create": {},
+    "read": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "created_by_id": "{{user.id}}"
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    }
+  }
+}

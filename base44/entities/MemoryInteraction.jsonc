@@ -1,0 +1,46 @@
+{
+  "name": "MemoryInteraction",
+  "type": "object",
+  "properties": {
+    "memory_id": {
+      "type": "string",
+      "description": "ID of the memory being interacted with"
+    },
+    "user_name": {
+      "type": "string",
+      "description": "Name of the user interacting"
+    },
+    "user_photo": {
+      "type": "string",
+      "description": "Profile photo URL of the user interacting"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "like",
+        "comment"
+      ],
+      "description": "Type of interaction"
+    },
+    "content": {
+      "type": "string",
+      "description": "Comment text (only for comments)"
+    }
+  },
+  "required": [
+    "memory_id",
+    "type"
+  ],
+  "rls": {
+    "create": {},
+    "read": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "created_by_id": "{{user.id}}"
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    }
+  }
+}

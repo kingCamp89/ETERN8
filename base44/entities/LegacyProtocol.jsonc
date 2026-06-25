@@ -1,0 +1,110 @@
+{
+  "name": "LegacyProtocol",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "description": "ID of the user this protocol is for"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "idle",
+        "warning_stage_1",
+        "warning_stage_2",
+        "final_user_warning",
+        "welfare_check",
+        "death_verification",
+        "executor_required",
+        "executor_review",
+        "cooling_off",
+        "approved_for_release",
+        "released",
+        "paused",
+        "cancelled",
+        "cancelled_by_user_activity"
+      ],
+      "default": "idle",
+      "description": "Current protocol stage"
+    },
+    "started_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the protocol was triggered"
+    },
+    "current_stage_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the current stage began"
+    },
+    "cancelled_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the protocol was cancelled"
+    },
+    "cancelled_reason": {
+      "type": "string",
+      "description": "Reason for cancellation"
+    },
+    "paused_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the protocol was paused"
+    },
+    "paused_reason": {
+      "type": "string",
+      "description": "Reason for pausing"
+    },
+    "cooling_off_started_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the cooling-off period started"
+    },
+    "cooling_off_ends_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the cooling-off period ends"
+    },
+    "release_approved_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the release was approved"
+    },
+    "released_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the memories were released"
+    },
+    "contact_confirmation_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of verified contacts who confirmed death"
+    },
+    "executor_approved": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether the executor approved the release"
+    },
+    "executor_approval_request_id": {
+      "type": "string",
+      "description": "ID of the active ExecutorApprovalRequest"
+    },
+    "manual_review_approved": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether manual review approved the release"
+    }
+  },
+  "required": [
+    "user_id",
+    "status"
+  ],
+  "rls": {
+    "create": {},
+    "read": {
+      "user_id": "{{user.id}}"
+    },
+    "update": {},
+    "delete": {}
+  }
+}

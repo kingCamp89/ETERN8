@@ -1,0 +1,109 @@
+{
+  "name": "MemoryGroup",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Group name"
+    },
+    "description": {
+      "type": "string",
+      "description": "Group description"
+    },
+    "member_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "User IDs in the group"
+    },
+    "member_names": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "User names in the group"
+    },
+    "member_photos": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Profile photo URLs in the group"
+    },
+    "pending_invites": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "invited_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "description": "Pending email invitations"
+    },
+    "invite_tokens": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "used": {
+            "type": "boolean",
+            "default": false
+          }
+        }
+      },
+      "description": "One-time invite tokens"
+    },
+    "cover_color": {
+      "type": "string",
+      "enum": [
+        "rose",
+        "gold",
+        "sky",
+        "sage",
+        "lavender",
+        "coral"
+      ],
+      "default": "rose"
+    },
+    "group_photo_url": {
+      "type": "string",
+      "description": "Custom group photo URL"
+    },
+    "group_photo_position": {
+      "type": "string",
+      "default": "center"
+    }
+  },
+  "required": [
+    "name"
+  ],
+  "rls": {
+    "create": {},
+    "read": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "created_by_id": "{{user.id}}"
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    }
+  }
+}

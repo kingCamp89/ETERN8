@@ -1,0 +1,227 @@
+{
+  "name": "Memory",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Title of the memory"
+    },
+    "content": {
+      "type": "string",
+      "description": "Text content of the memory"
+    },
+    "memory_type": {
+      "type": "string",
+      "enum": [
+        "text",
+        "photo",
+        "voice",
+        "video"
+      ],
+      "description": "Type of memory"
+    },
+    "loved_one_id": {
+      "type": "string",
+      "description": "ID of the loved one this memory is for"
+    },
+    "loved_one_name": {
+      "type": "string",
+      "description": "Name of the loved one"
+    },
+    "loved_one_photo_url": {
+      "type": "string",
+      "description": "Profile photo URL of the loved one"
+    },
+    "created_by_name": {
+      "type": "string",
+      "description": "Name of the user who created this memory"
+    },
+    "created_by_photo_url": {
+      "type": "string",
+      "description": "Profile photo URL of the user who created this memory"
+    },
+    "memory_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date of the memory"
+    },
+    "media_url": {
+      "type": "string",
+      "description": "URL of attached media (photo, voice, video)"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Tags for categorization"
+    },
+    "emotion": {
+      "type": "string",
+      "enum": [
+        "love",
+        "pride",
+        "joy",
+        "gratitude",
+        "nostalgia",
+        "hope",
+        "strength",
+        "reflection",
+        "milestone",
+        "funny"
+      ],
+      "description": "Primary emotion of this memory"
+    },
+    "location_name": {
+      "type": "string",
+      "description": "Location name where this memory took place"
+    },
+    "location_lat": {
+      "type": "number",
+      "description": "Latitude coordinate"
+    },
+    "location_lng": {
+      "type": "number",
+      "description": "Longitude coordinate"
+    },
+    "is_private": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether this memory is private"
+    },
+    "is_scheduled": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether this memory is scheduled for future delivery"
+    },
+    "scheduled_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Scheduled delivery date"
+    },
+    "scheduled_time": {
+      "type": "string",
+      "description": "Scheduled delivery time in HH:MM format (24-hour, user local time). If empty, defaults to 09:00."
+    },
+    "scheduled_timezone": {
+      "type": "string",
+      "description": "IANA timezone of the user when they scheduled this memory (e.g. Australia/Brisbane). Used to convert scheduled_time to UTC for delivery."
+    },
+    "scheduled_occasion": {
+      "type": "string",
+      "description": "Occasion for scheduled delivery"
+    },
+    "is_legacy": {
+      "type": "boolean",
+      "default": false,
+      "description": "DEPRECATED \u2014 use delivery_type. Include in legacy delivery"
+    },
+    "delivery_type": {
+      "type": "string",
+      "enum": [
+        "normal",
+        "scheduled",
+        "legacy"
+      ],
+      "default": "normal",
+      "description": "Delivery type: normal, scheduled (date-based), or legacy (posthumous)"
+    },
+    "delivery_status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "scheduled",
+        "delivered",
+        "legacy_pending",
+        "legacy_released",
+        "cancelled"
+      ],
+      "default": "draft",
+      "description": "Current delivery status"
+    },
+    "recipient_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "IDs of intended recipients (TrustedContact, Executor, or LovedOne IDs)"
+    },
+    "recipient_names": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Denormalized names of intended recipients"
+    },
+    "delivered_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the memory was delivered to the recipient"
+    },
+    "legacy_released_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the memory was released as part of legacy"
+    },
+    "delivery_attempts": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of delivery attempts made"
+    },
+    "last_attempt_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the last delivery attempt was made"
+    },
+    "last_delivery_error": {
+      "type": "string",
+      "description": "Last delivery error message"
+    },
+    "share_with_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "User IDs to explicitly share this memory with"
+    },
+    "share_group_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Group IDs for shared memory timelines"
+    },
+    "share_text": {
+      "type": "boolean",
+      "default": true
+    },
+    "share_photo": {
+      "type": "boolean",
+      "default": true
+    },
+    "share_voice": {
+      "type": "boolean",
+      "default": false
+    },
+    "share_video": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "required": [
+    "title",
+    "memory_type"
+  ],
+  "rls": {
+    "create": {},
+    "read": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "created_by_id": "{{user.id}}"
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    }
+  }
+}

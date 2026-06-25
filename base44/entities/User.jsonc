@@ -1,0 +1,115 @@
+{
+  "name": "User",
+  "type": "object",
+  "properties": {
+    "username": {
+      "type": "string",
+      "description": "Unique username for search and friend connections"
+    },
+    "photo_url": {
+      "type": "string",
+      "description": "Profile photo URL"
+    },
+    "legacy_enabled": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether posthumous legacy delivery is enabled"
+    },
+    "legacy_wait_months": {
+      "type": "number",
+      "default": 3,
+      "minimum": 1,
+      "maximum": 6,
+      "description": "Months of inactivity before triggering legacy protocol"
+    },
+    "last_checkin_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Last time the user checked in"
+    },
+    "legacy_activity_timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Last time any authenticated activity occurred \u2014 auto-updated on app usage"
+    },
+    "legacy_triggered": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether the legacy protocol has been triggered"
+    },
+    "legacy_confirmations": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of trusted contacts who confirmed passing"
+    },
+    "legacy_confirmed": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether legacy has been fully confirmed"
+    },
+    "legacy_confirmed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the legacy was fully confirmed"
+    },
+    "legacy_cooling_off_until": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Cooling-off period end time after first passing confirmation"
+    },
+    "legacy_confirmed_by_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "IDs of contacts who confirmed passing"
+    },
+    "legacy_notification_count": {
+      "type": "number",
+      "default": 0,
+      "description": "How many waves of notifications have been sent"
+    },
+    "legacy_last_notification_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the last notification wave was sent"
+    },
+    "legacy_confirm_tokens": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "contact_id": {
+            "type": "string"
+          },
+          "token": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "description": "DEPRECATED \u2014 tokens now stored as hashes on contacts. Crypto-random tokens for legacy confirmation links"
+    },
+    "legacy_executor_id": {
+      "type": "string",
+      "description": "DEPRECATED \u2014 use Executor entity. ID of the trusted contact designated as executor"
+    },
+    "legacy_protocol_status": {
+      "type": "string",
+      "enum": [
+        "idle",
+        "verification_pending",
+        "executor_review",
+        "approved_for_release",
+        "released",
+        "cancelled",
+        "cancelled_by_user_activity"
+      ],
+      "default": "idle",
+      "description": "DEPRECATED \u2014 use LegacyProtocol entity. Current phase of the legacy release protocol"
+    }
+  }
+}

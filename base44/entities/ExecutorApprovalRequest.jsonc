@@ -1,0 +1,67 @@
+{
+  "name": "ExecutorApprovalRequest",
+  "type": "object",
+  "properties": {
+    "executor_id": {
+      "type": "string",
+      "description": "ID of the executor who must approve"
+    },
+    "user_id": {
+      "type": "string",
+      "description": "ID of the user whose legacy is being released"
+    },
+    "protocol_id": {
+      "type": "string",
+      "description": "ID of the LegacyProtocol this request belongs to"
+    },
+    "approval_token_hash": {
+      "type": "string",
+      "description": "Hashed approval token (single-use, separate from identity verification)"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the approval token expires"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "approved",
+        "paused",
+        "cancelled",
+        "expired"
+      ],
+      "default": "pending",
+      "description": "Status of the approval request"
+    },
+    "completed_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the request was completed (approved, paused, or cancelled)"
+    },
+    "action_taken": {
+      "type": "string",
+      "enum": [
+        "approve",
+        "pause",
+        "cancel",
+        "report_mistake"
+      ],
+      "description": "The action the executor took"
+    }
+  },
+  "required": [
+    "executor_id",
+    "user_id",
+    "status"
+  ],
+  "rls": {
+    "create": {},
+    "read": {
+      "user_id": "{{user.id}}"
+    },
+    "update": {},
+    "delete": {}
+  }
+}

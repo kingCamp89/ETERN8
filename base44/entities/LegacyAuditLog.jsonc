@@ -1,0 +1,101 @@
+{
+  "name": "LegacyAuditLog",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "description": "ID of the user whose legacy is involved"
+    },
+    "contact_id": {
+      "type": "string",
+      "description": "ID of the trusted contact or executor, if applicable"
+    },
+    "event_type": {
+      "type": "string",
+      "enum": [
+        "legacy_enabled",
+        "legacy_disabled",
+        "check_in",
+        "auto_check_in",
+        "manual_check_in",
+        "inactivity_detected",
+        "protocol_triggered",
+        "notification_sent",
+        "reminder_sent",
+        "warning_email_sent",
+        "welfare_check_sent",
+        "death_confirmation_requested",
+        "death_confirmation_submitted",
+        "confirmation_received_alive",
+        "confirmation_received_passed",
+        "unsure_response",
+        "mistake_report",
+        "contact_added",
+        "contact_verification_sent",
+        "contact_verified",
+        "contact_revoked",
+        "executor_added",
+        "executor_verification_sent",
+        "executor_verified",
+        "executor_revoked",
+        "executor_approval_requested",
+        "executor_approved",
+        "executor_paused",
+        "executor_cancelled",
+        "cooling_off_started",
+        "cooling_off_expired",
+        "protocol_cancelled",
+        "protocol_paused",
+        "protocol_released",
+        "release_validation_passed",
+        "release_validation_failed",
+        "recipient_validation_passed",
+        "recipient_validation_failed",
+        "rate_limit_exceeded",
+        "simulation_run",
+        "simulation_completed",
+        "user_emailed",
+        "memory_delivered",
+        "memory_legacy_released",
+        "failed_delivery",
+        "delivery_retry",
+        "content_viewed",
+        "content_edited",
+        "content_shared",
+        "content_deleted",
+        "access_denied"
+      ],
+      "description": "Type of audit event"
+    },
+    "content_type": {
+      "type": "string",
+      "enum": [
+        "memory",
+        "private_note",
+        "group",
+        "memory_share"
+      ],
+      "description": "Type of content accessed"
+    },
+    "content_id": {
+      "type": "string",
+      "description": "ID of the content accessed"
+    },
+    "details": {
+      "type": "string",
+      "description": "Human-readable description of the event"
+    }
+  },
+  "required": [
+    "user_id",
+    "event_type"
+  ],
+  "rls": {
+    "create": {},
+    "read": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {},
+    "delete": {}
+  }
+}

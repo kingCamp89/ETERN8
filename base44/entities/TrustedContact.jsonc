@@ -1,0 +1,87 @@
+{
+  "name": "TrustedContact",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Name of the trusted contact"
+    },
+    "email": {
+      "type": "string",
+      "description": "Email address"
+    },
+    "phone": {
+      "type": "string",
+      "description": "Phone number"
+    },
+    "relationship": {
+      "type": "string",
+      "description": "Relationship to the user"
+    },
+    "is_verified": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether this contact has been verified"
+    },
+    "verification_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "verified",
+        "revoked"
+      ],
+      "default": "pending",
+      "description": "Approval status \u2014 contacts start pending and must verify via email link"
+    },
+    "verification_token_hash": {
+      "type": "string",
+      "description": "Hashed verification token (single-use)"
+    },
+    "verification_token_expires_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the verification token expires"
+    },
+    "verified_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the contact was verified"
+    },
+    "revoked_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the contact was revoked"
+    },
+    "is_executor": {
+      "type": "boolean",
+      "default": false,
+      "description": "DEPRECATED \u2014 use Executor entity. Whether this contact is the legacy executor"
+    },
+    "failed_attempt_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of failed token verification attempts (rate limiting)"
+    },
+    "last_failed_attempt_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the last failed attempt occurred"
+    }
+  },
+  "required": [
+    "name",
+    "email"
+  ],
+  "rls": {
+    "create": {},
+    "read": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "created_by_id": "{{user.id}}"
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    }
+  }
+}

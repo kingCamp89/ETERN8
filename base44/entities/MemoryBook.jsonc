@@ -1,0 +1,58 @@
+{
+  "name": "MemoryBook",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Title of the memory book"
+    },
+    "loved_one_id": {
+      "type": "string",
+      "description": "ID of the loved one this book is for"
+    },
+    "loved_one_name": {
+      "type": "string",
+      "description": "Name of the loved one"
+    },
+    "description": {
+      "type": "string",
+      "description": "Description of the book"
+    },
+    "memory_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "IDs of memories included in this book"
+    },
+    "cover_photo_url": {
+      "type": "string",
+      "description": "Cover photo URL"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "generating",
+        "ready"
+      ],
+      "default": "draft"
+    }
+  },
+  "required": [
+    "title",
+    "loved_one_id"
+  ],
+  "rls": {
+    "create": {},
+    "read": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "created_by_id": "{{user.id}}"
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    }
+  }
+}

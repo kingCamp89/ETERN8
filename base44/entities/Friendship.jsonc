@@ -1,0 +1,57 @@
+{
+  "name": "Friendship",
+  "type": "object",
+  "properties": {
+    "from_user_id": {
+      "type": "string",
+      "description": "ID of the user sending the request"
+    },
+    "from_user_name": {
+      "type": "string",
+      "description": "Full name of the sender"
+    },
+    "from_username": {
+      "type": "string",
+      "description": "Username of the sender"
+    },
+    "to_user_id": {
+      "type": "string",
+      "description": "ID of the user receiving the request"
+    },
+    "to_user_name": {
+      "type": "string",
+      "description": "Full name of the recipient"
+    },
+    "to_username": {
+      "type": "string",
+      "description": "Username of the recipient"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "accepted",
+        "rejected"
+      ],
+      "default": "pending",
+      "description": "Status of the friendship"
+    }
+  },
+  "required": [
+    "from_user_id",
+    "to_user_id",
+    "status"
+  ],
+  "rls": {
+    "create": {},
+    "read": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "created_by_id": "{{user.id}}"
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    }
+  }
+}

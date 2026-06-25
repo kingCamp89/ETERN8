@@ -1,0 +1,79 @@
+{
+  "name": "MemoryShare",
+  "type": "object",
+  "properties": {
+    "memory_id": {
+      "type": "string",
+      "description": "ID of the shared memory"
+    },
+    "memory_title": {
+      "type": "string",
+      "description": "Title of the shared memory (denormalized)"
+    },
+    "from_user_id": {
+      "type": "string",
+      "description": "ID of the user who shared it"
+    },
+    "from_user_name": {
+      "type": "string",
+      "description": "Name of the user who shared it"
+    },
+    "to_user_id": {
+      "type": "string",
+      "description": "ID of the recipient user"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "accepted",
+        "rejected",
+        "tagged"
+      ],
+      "default": "pending",
+      "description": "Acceptance status"
+    },
+    "added_thoughts": {
+      "type": "string",
+      "description": "Recipient's added thoughts/feelings"
+    },
+    "added_emotion": {
+      "type": "string",
+      "enum": [
+        "love",
+        "pride",
+        "joy",
+        "gratitude",
+        "nostalgia",
+        "hope",
+        "strength",
+        "reflection",
+        "milestone",
+        "funny"
+      ],
+      "description": "Recipient's added emotion"
+    },
+    "shared_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the share was created"
+    }
+  },
+  "required": [
+    "memory_id",
+    "from_user_id",
+    "to_user_id"
+  ],
+  "rls": {
+    "create": {},
+    "read": {
+      "to_user_id": "{{user.id}}"
+    },
+    "update": {
+      "to_user_id": "{{user.id}}"
+    },
+    "delete": {
+      "to_user_id": "{{user.id}}"
+    }
+  }
+}
