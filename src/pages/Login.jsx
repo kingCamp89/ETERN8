@@ -23,6 +23,11 @@ export default function Login() {
       await new Promise(r => setTimeout(r, 300));
       window.location.href = '/';
     } catch (err) {
+      const status = err?.status ?? err?.response?.status;
+      if (status === 404) {
+        setError('Could not reach the sign-in service. Try clearing site data, restarting the dev server, or opening the app at forever-moments-vault.base44.app.');
+        return;
+      }
       const msg = err?.response?.data?.message || err?.data?.message || err?.message || '';
       setError(msg || 'Invalid email or password. Please check your credentials.');
     } finally {
