@@ -13,7 +13,7 @@ export default function TemplatePickerDialog({ open, onOpenChange, onGenerate, i
         <DialogHeader>
           <DialogTitle className="font-heading">Choose a Style</DialogTitle>
         </DialogHeader>
-        <p className="text-sm text-muted-foreground -mt-1">Pick a template for your printed memory book.</p>
+        <p className="text-sm text-muted-foreground -mt-1">Pick one of four themes for your memory story PDF.</p>
 
         <div className="grid grid-cols-2 gap-3 mt-1">
           {PDF_TEMPLATES.map((tpl) => (
@@ -52,7 +52,7 @@ export default function TemplatePickerDialog({ open, onOpenChange, onGenerate, i
           className="w-full rounded-xl gap-2 mt-1"
         >
           <Download className="w-4 h-4" />
-          {isGenerating ? 'Generating PDF...' : 'Download PDF'}
+          {isGenerating ? 'Generating…' : 'Download memory story'}
         </Button>
       </DialogContent>
     </Dialog>

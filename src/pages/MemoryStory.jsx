@@ -11,7 +11,8 @@ import { motion } from 'framer-motion';
 import { useRef, useEffect, useState } from 'react';
 import { Image, Mic, Calendar, Heart, Quote, Play, Pause, Download } from 'lucide-react';
 import SafeImage from '../components/shared/SafeImage';
-import { generateStoryPDF } from '../lib/generateStoryPDF';
+import { generateMemoryStoryPDF } from '../lib/generateMemoryStoryPDF';
+import TemplatePickerDialog from '../components/memorybooks/TemplatePickerDialog';
 
 const themeColors = {
   amber: { line: 'bg-primary/30', dot: 'bg-primary', accent: 'text-primary', card: 'border-primary/20' },
@@ -198,6 +199,7 @@ function YearChapter({ year, memories, theme }) {
 export default function MemoryStory() {
   const { id } = useParams();
   const [pdfLoading, setPdfLoading] = useState(false);
+  const [showTemplatePicker, setShowTemplatePicker] = useState(false);
 
   const { data: person, isLoading } = useQuery({
     queryKey: ['lovedOne', id],
@@ -238,7 +240,7 @@ export default function MemoryStory() {
     );
   }
 
-  const theme = themeColors[person.color_theme] || themeColors.amber;
+  const theme = themeColors[person.profile_theme] || themeColors.amber;
 
   const yearGroups = memories.reduce((acc, memory) => {
     const year = memory.memory_date
@@ -251,11 +253,20 @@ export default function MemoryStory() {
 
   const sortedYears = Object.keys(yearGroups).sort((a, b) => Number(a) - Number(b));
 
-  const handleDownloadPDF = async () => {
+  const handleDownloadPDF = async (templateId) => {
     setPdfLoading(true);
+    setShowTemplatePicker(false);
     try {
       const me = await base44.auth.me();
-      await generateStoryPDF(person, memories, 'warm', me?.full_name || null);
+      await generateMemoryStoryPDF({
+        memories,
+        lovedOnes: [person],
+        privateNotes: [],
+        creatorName: me?.display_name || me?.full_name || null,
+        templateId,
+        download: true,
+        filename: `${person.name?.replace(/\s+/g, '_') || 'Memory'}_Memory_Story.pdf`,
+      });
     } catch (err) {
       console.error('PDF generation failed:', err);
       alert('Could not create the PDF. Please try again.');
@@ -287,7 +298,7 @@ export default function MemoryStory() {
           <Button
             variant="outline"
             size="sm"
-            onClick={handleDownloadPDF}
+            onClick={() => setShowTemplatePicker(true)}
             disabled={pdfLoading}
             className="mt-3 rounded-xl gap-2"
           >
@@ -316,6 +327,13 @@ export default function MemoryStory() {
           />
         )}
       </div>
+
+      <TemplatePickerDialog
+        open={showTemplatePicker}
+        onOpenChange={setShowTemplatePicker}
+        onGenerate={handleDownloadPDF}
+        isGenerating={pdfLoading}
+      />
     </div>
   );
 }

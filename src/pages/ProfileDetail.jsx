@@ -11,7 +11,7 @@ import ProfileAvatar from '../components/shared/ProfileAvatar';
 import KeepsakeCard from '../components/shared/KeepsakeCard';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
 import ProfileDetailSkeleton from '../components/profile/ProfileDetailSkeleton';
-import { generateStoryPDF } from '../lib/generateStoryPDF';
+import { generateMemoryStoryPDF } from '../lib/generateMemoryStoryPDF';
 import { motion } from 'framer-motion';
 import { format, differenceInYears } from 'date-fns';
 import { applyTheme, getGlobalTheme } from '../lib/themes';
@@ -117,7 +117,15 @@ export default function ProfileDetail() {
       });
       const allMemories = res.data?.memories || [];
       const me = await base44.auth.me();
-      await generateStoryPDF(person, allMemories, templateId, me?.full_name || null);
+      await generateMemoryStoryPDF({
+        memories: allMemories,
+        lovedOnes: [person],
+        privateNotes: [],
+        creatorName: me?.display_name || me?.full_name || null,
+        templateId,
+        download: true,
+        filename: `${person.name?.replace(/\s+/g, '_') || 'Memory'}_Memory_Story.pdf`,
+      });
     } catch (err) {
       console.error('PDF generation failed:', err);
       alert('Could not create the PDF. Please try again.');
@@ -272,7 +280,11 @@ export default function ProfileDetail() {
         {['all', 'text', 'photo', 'voice', 'video'].map(tab => (
           <TabsContent key={tab} value={tab} className="mt-4 space-y-6">
             {sortedYears.map(year => {
-              const yearMemories = memoryGroups[year].filter(m => tab === 'all' || m.memory_type === tab);
+              const yearMemories = memoryGroups[year]
+                .filter(m => tab === 'all' || m.memory_type === tab)
+                .sort((a, b) =>
+                  new Date(b.memory_date || b.created_date) - new Date(a.memory_date || a.created_date),
+                );
               if (yearMemories.length === 0) return null;
               return (
                 <div key={year}>

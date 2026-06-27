@@ -14,7 +14,7 @@ import {
 import TemplatePickerDialog from '@/components/memorybooks/TemplatePickerDialog';
 import EmptyState from '@/components/shared/EmptyState';
 import LoadingSpinner from '@/components/shared/LoadingSpinner';
-import { generateStoryPDF } from '@/lib/generateStoryPDF';
+import { generateMemoryStoryPDF } from '@/lib/generateMemoryStoryPDF';
 
 function BookStatusPill({ status }) {
   const config = {
@@ -80,12 +80,23 @@ export default function MemoryBookDetail() {
     setIsGeneratingPDF(true);
     setShowTemplatePicker(false);
     try {
-      const person = {
+      let person = {
         name: book.loved_one_name || book.title,
         photo_url: book.cover_photo_url || null,
-        personal_notes: book.description || null,
       };
-      await generateStoryPDF(person, bookMemories, templateId);
+      if (book.loved_one_id) {
+        const rows = await base44.entities.LovedOne.filter({ id: book.loved_one_id });
+        if (rows[0]) person = rows[0];
+      }
+      await generateMemoryStoryPDF({
+        memories: bookMemories,
+        lovedOnes: [person],
+        privateNotes: [],
+        creatorName: null,
+        templateId,
+        download: true,
+        filename: `${(book.loved_one_name || book.title || 'Memory').replace(/\s+/g, '_')}_Memory_Story.pdf`,
+      });
     } catch (err) {
       console.error('PDF generation failed:', err);
       alert('Could not create the PDF. Please try again.');

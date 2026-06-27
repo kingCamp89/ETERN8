@@ -53,6 +53,22 @@ export const PDF_TEMPLATES = [
       cream:      [255, 252, 248],
     },
   },
+  {
+    id: 'sage',
+    name: 'Sage Garden',
+    description: 'Calm sage & parchment',
+    preview: { bg: '#f4f8f5', accent: '#5a8f71', text: '#1f2e26' },
+    colors: {
+      bg:         [244, 248, 245],
+      accent:     [90, 143, 113],
+      accentSoft: [180, 210, 190],
+      text:       [31, 46, 38],
+      textSoft:   [100, 130, 115],
+      line:       [210, 225, 215],
+      light:      [235, 245, 238],
+      cream:      [250, 252, 250],
+    },
+  },
 ];
 
 // ══════════════════════════════════════════════════════════════════════
@@ -90,6 +106,40 @@ async function loadImage(url) {
     };
     img.onerror = () => { clearTimeout(timer); resolve(null); };
     img.src = url;
+  });
+}
+
+/** Circular crop with object-fit: cover — baked into pixels (jsPDF circle clip is unreliable). */
+export function maskImageToCircle(img, pixelSize = 320) {
+  if (!img?.dataURL) return Promise.resolve(null);
+  return new Promise((resolve) => {
+    const imageEl = new Image();
+    const timer = setTimeout(() => { imageEl.src = ''; resolve(null); }, IMAGE_TIMEOUT);
+    imageEl.onload = () => {
+      clearTimeout(timer);
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = pixelSize;
+        canvas.height = pixelSize;
+        const ctx = canvas.getContext('2d');
+        const r = pixelSize / 2;
+        const scale = Math.max(pixelSize / imageEl.width, pixelSize / imageEl.height);
+        const w = imageEl.width * scale;
+        const h = imageEl.height * scale;
+        const x = (pixelSize - w) / 2;
+        const y = (pixelSize - h) / 2;
+        ctx.beginPath();
+        ctx.arc(r, r, r, 0, Math.PI * 2);
+        ctx.closePath();
+        ctx.clip();
+        ctx.drawImage(imageEl, x, y, w, h);
+        resolve({ dataURL: canvas.toDataURL('image/png'), width: pixelSize, height: pixelSize });
+      } catch (_) {
+        resolve(null);
+      }
+    };
+    imageEl.onerror = () => { clearTimeout(timer); resolve(null); };
+    imageEl.src = img.dataURL;
   });
 }
 
@@ -178,17 +228,16 @@ async function drawCover(doc, c, pageW, pageH, person, memories, creatorName) {
     const r = size / 2;
 
     if (img) {
+      const circular = await maskImageToCircle(img, 320);
       // Soft glow behind photo
       doc.setFillColor(...c.accentSoft);
       doc.setGState(new doc.GState({ opacity: 0.15 }));
       doc.circle(cx, cy, r + 4, 'F');
       doc.setGState(new doc.GState({ opacity: 1 }));
 
-      doc.saveGraphicsState();
-      doc.circle(cx, cy, r);
-      doc.clip();
-      doc.addImage(img.dataURL, 'JPEG', cx - r, coverY, size, size, null, 'FAST');
-      doc.restoreGraphicsState();
+      if (circular) {
+        doc.addImage(circular.dataURL, 'PNG', cx - r, coverY, size, size, null, 'FAST');
+      }
     } else {
       doc.setFillColor(...c.light);
       doc.setGState(new doc.GState({ opacity: 0.3 }));
