@@ -214,7 +214,7 @@ export default function MemoryStory() {
     queryKey: ['memories', 'lovedOne', id],
     queryFn: async () => {
       const me = await base44.auth.me();
-      return base44.entities.Memory.filter({ created_by_id: me.id, loved_one_id: id }, 'memory_date');
+      return base44.entities.Memory.filter({ created_by_id: me.id, loved_one_id: id }, '-memory_date');
     },
     enabled: !!id && !!person,
   });
@@ -251,7 +251,7 @@ export default function MemoryStory() {
     return acc;
   }, {});
 
-  const sortedYears = Object.keys(yearGroups).sort((a, b) => Number(a) - Number(b));
+  const sortedYears = Object.keys(yearGroups).sort((a, b) => Number(b) - Number(a));
 
   const handleDownloadPDF = async (templateId) => {
     setPdfLoading(true);
@@ -317,7 +317,15 @@ export default function MemoryStory() {
       <div className="page-sections pb-20">
         {sortedYears.length > 0 ? (
           sortedYears.map(year => (
-            <YearChapter key={year} year={year} memories={yearGroups[year]} theme={theme} />
+            <YearChapter
+              key={year}
+              year={year}
+              memories={[...yearGroups[year]].sort(
+                (a, b) =>
+                  new Date(b.memory_date || b.created_date) - new Date(a.memory_date || a.created_date),
+              )}
+              theme={theme}
+            />
           ))
         ) : (
           <EmptyState
