@@ -1,4 +1,14 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { hashToken } from '../_shared/hashToken.ts';
+
+async function findInviteTokenIndex(inviteTokens, inviteToken) {
+  const tokenHash = await hashToken(inviteToken);
+  return inviteTokens.findIndex(
+    (t) =>
+      (t.token_hash && t.token_hash === tokenHash) ||
+      (t.token && t.token === inviteToken),
+  );
+}
 
 Deno.serve(async (req) => {
   try {
@@ -29,7 +39,7 @@ Deno.serve(async (req) => {
     }
 
     const inviteTokens = group.invite_tokens || [];
-    const tokenIndex = inviteTokens.findIndex(t => t.token === inviteToken);
+    const tokenIndex = await findInviteTokenIndex(inviteTokens, inviteToken);
 
     if (tokenIndex === -1) {
       return Response.json({ error: 'Invalid or expired invite link' }, { status: 403 });
@@ -50,16 +60,17 @@ Deno.serve(async (req) => {
     const memberPhotos = [...(group.member_photos || []), user.photo_url || ''];
 
     const pendingInvites = (group.pending_invites || []).filter(
-      inv => {
+      (inv) => {
         const emailMatch = inv.email?.toLowerCase() === user.email?.toLowerCase();
         const nameMatch = inv.name?.trim().toLowerCase() === userName.trim().toLowerCase();
         return !emailMatch && !nameMatch;
-      }
+      },
     );
 
-    // Mark token as used
+    // Mark token as used; drop legacy plain token if present
     const updatedTokens = [...inviteTokens];
-    updatedTokens[tokenIndex] = { ...updatedTokens[tokenIndex], used: true };
+    const { token: _legacyToken, ...tokenEntry } = updatedTokens[tokenIndex];
+    updatedTokens[tokenIndex] = { ...tokenEntry, used: true };
 
     // Use asServiceRole for update since the joiner is not the creator
     await base44.asServiceRole.entities.MemoryGroup.update(groupId, {

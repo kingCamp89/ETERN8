@@ -55,8 +55,13 @@
       "items": {
         "type": "object",
         "properties": {
+          "token_hash": {
+            "type": "string",
+            "description": "SHA-256 hash of the invite token (raw token never stored)"
+          },
           "token": {
-            "type": "string"
+            "type": "string",
+            "description": "Deprecated — legacy plain tokens only; new invites use token_hash"
           },
           "created_at": {
             "type": "string",
@@ -95,7 +100,9 @@
     "name"
   ],
   "rls": {
-    "create": {},
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
     "read": {
       "created_by_id": "{{user.id}}"
     },

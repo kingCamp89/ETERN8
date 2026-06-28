@@ -1,10 +1,11 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
-import { Outlet, useLocation, useNavigate, Link, Navigate } from 'react-router-dom';
+import { Outlet, useLocation, useNavigate, Navigate } from 'react-router-dom';
 import { BrandHome, BrandHeart, BrandUsers, BrandUser, BrandUserPlus } from '@/components/shared/BrandIcons';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { useAuth } from '@/lib/AuthContext';
+import { hasSeenIntro } from '@/lib/introStorage';
 import DesktopAmbience from '@/components/layout/DesktopAmbience';
 
 const tabRoots = [
@@ -115,6 +116,25 @@ export default function AppLayout() {
   }, [location.pathname, currentTab]);
 
   const handleTabClick = useCallback((tabKey, rootPath) => {
+    const unseenShares = pendingSharesCount > seenCounts.shares
+      ? pendingSharesCount - seenCounts.shares
+      : 0;
+    const unseenFriends = pendingFriendCount > seenCounts.friends
+      ? pendingFriendCount - seenCounts.friends
+      : 0;
+
+    if (tabKey === 'home' && unseenShares > 0) {
+      setSeenCounts((prev) => ({ ...prev, shares: pendingSharesCount }));
+      navigate('/shared');
+      return;
+    }
+
+    if (tabKey === 'friends' && unseenFriends > 0) {
+      setSeenCounts((prev) => ({ ...prev, friends: pendingFriendCount }));
+      navigate('/friends?tab=requests');
+      return;
+    }
+
     if (tabKey === currentTab) {
       // Re-select active tab: reset to root
       setTabStacks(prev => ({ ...prev, [tabKey]: [rootPath] }));
@@ -125,13 +145,17 @@ export default function AppLayout() {
       const target = stack[stack.length - 1] || rootPath;
       navigate(target, { replace: true });
     }
-  }, [currentTab, tabStacks, navigate]);
+  }, [currentTab, tabStacks, navigate, pendingSharesCount, seenCounts.shares, pendingFriendCount, seenCounts.friends]);
 
   const navHeight = 'calc(64px + env(safe-area-inset-bottom, 0px))';
 
   // Redirect to set-username if the user doesn't have one
   if (!isLoadingAuth && user && !user.username && location.pathname !== '/set-username') {
     return <Navigate to="/set-username" replace />;
+  }
+
+  if (!isLoadingAuth && user?.username && !hasSeenIntro()) {
+    return <Navigate to="/intro" replace />;
   }
 
   return (

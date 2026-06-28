@@ -54,7 +54,7 @@
     "to_user_id"
   ],
   "rls": {
-    "create": {},
+    "create": false,
     "read": {
       "to_user_id": "{{user.id}}"
     },

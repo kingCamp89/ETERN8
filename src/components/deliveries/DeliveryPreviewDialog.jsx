@@ -4,9 +4,9 @@ import { Mail, Heart, Image, Mic, Video, Quote } from 'lucide-react';
 import { format } from 'date-fns';
 
 const MEDIA_LABELS = {
-  photo: { icon: Image, label: 'Photo — view in ETRN8 app' },
-  voice: { icon: Mic, label: 'Voice recording — listen in ETRN8 app' },
-  video: { icon: Video, label: 'Video — watch in ETRN8 app' },
+  photo: { icon: Image, label: 'Photo — view in ETERN8 app' },
+  voice: { icon: Mic, label: 'Voice recording — listen in ETERN8 app' },
+  video: { icon: Video, label: 'Video — watch in ETERN8 app' },
 };
 
 export default function DeliveryPreviewDialog({ group, open, onOpenChange }) {
@@ -47,7 +47,7 @@ export default function DeliveryPreviewDialog({ group, open, onOpenChange }) {
               </div>
               <div className="flex-1 min-w-0">
                 <BrandWordmark size="sm" className="truncate" />
-                <p className="text-[10px] text-muted-foreground">noreply@etrn8.app</p>
+                <p className="text-[10px] text-muted-foreground">noreply@etern8.app</p>
               </div>
             </div>
             <p className="text-xs text-muted-foreground mt-1">
@@ -131,7 +131,7 @@ export default function DeliveryPreviewDialog({ group, open, onOpenChange }) {
 
             <div className="pt-1">
               <p className="font-body text-sm">With love,</p>
-              <p className="font-heading italic text-muted-foreground text-sm">The ETRN8 Team</p>
+              <p className="font-heading italic text-muted-foreground text-sm">The ETERN8 Team</p>
             </div>
           </div>
         </div>

@@ -37,7 +37,7 @@ Deno.serve(async (req) => {
     const target = targetUser[0];
     if (!target) return Response.json({ error: 'User not found' }, { status: 404 });
 
-    const friendship = await base44.entities.Friendship.create({
+    const friendship = await base44.asServiceRole.entities.Friendship.create({
       from_user_id: user.id,
       from_user_name: user.full_name || '',
       from_username: user.username || '',
@@ -45,6 +45,18 @@ Deno.serve(async (req) => {
       to_user_name: target.full_name || '',
       to_username: target.username || '',
       status: 'pending',
+      created_by_id: user.id,
+    });
+
+    const senderName = user.full_name || user.username || 'Someone';
+    await base44.asServiceRole.entities.Notification.create({
+      type: 'friend_request',
+      message: `${senderName} sent you a friend request`,
+      from_user_id: user.id,
+      from_user_name: senderName,
+      from_user_photo: user.photo_url || '',
+      to_user_id: toUserId,
+      is_read: false,
     });
 
     return Response.json({ friendship });

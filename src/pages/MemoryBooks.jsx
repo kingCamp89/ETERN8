@@ -62,7 +62,7 @@ export default function MemoryBooks() {
     <div className="min-h-screen">
       <PageHeader
         title="Memory books"
-        subtitle="Beautiful printed collections"
+        subtitle="Luxury printed collections of your life's moments"
         showBack
         action={
           <Dialog open={showCreate} onOpenChange={setShowCreate}>
@@ -164,8 +164,8 @@ export default function MemoryBooks() {
           </div>
         ) : (
           <EmptyState
-            prompt="Turn memories into a keepsake"
-            subtitle="Create a beautiful collection that can be printed and held."
+            prompt="Turn memories into an heirloom"
+            subtitle="Build a professional storybook — curated pages, premium typography, and print-ready layouts."
             illustration={<BookOpen className="w-8 h-8 text-primary/50" />}
             action={
               <Button onClick={() => setShowCreate(true)} className="rounded-xl gap-2">

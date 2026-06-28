@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { requireInternalSecret, stripInternalSecret } from '../_shared/internalAuth.ts';
 
 const QUORUM_REQUIRED = 2;
 
@@ -17,9 +18,12 @@ const QUORUM_REQUIRED = 2;
  */
 Deno.serve(async (req) => {
   try {
-    const base44 = createClientFromRequest(req);
     const body = await req.json();
-    const { protocol_id, user_id } = body;
+    const authError = requireInternalSecret(req, body);
+    if (authError) return authError;
+
+    const base44 = createClientFromRequest(req);
+    const { protocol_id, user_id } = stripInternalSecret(body);
 
     if (!protocol_id || !user_id) {
       return Response.json({ valid: false, reasons: ['Missing protocol_id or user_id'] }, { status: 400 });

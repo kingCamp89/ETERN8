@@ -116,7 +116,7 @@ Deno.serve(async (req) => {
     });
 
     const undelivered = allMemories.filter(m =>
-      m.delivery_status !== 'delivered' && m.delivery_status !== 'cancelled'
+      m.delivery_status !== 'delivered' && m.delivery_status !== 'cancelled' && !m.is_private
     );
 
     // Group by recipient using strict ID matching only

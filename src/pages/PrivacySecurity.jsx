@@ -31,7 +31,7 @@ const sections = [
     icon: EyeOff,
     title: 'Privacy by design',
     items: [
-      'Zero-access architecture: ETRN8 employees cannot view your memories or personal content',
+      'Zero-access architecture: ETERN8 employees cannot view your memories or personal content',
       'You control exactly which memories are shared and with whom — nothing is ever shared without your explicit action',
       'Private memories are invisible to everyone except you, even after legacy delivery',
       'Your data is never sold, shared with advertisers, or used for any purpose beyond providing the service',
@@ -42,9 +42,9 @@ const sections = [
     title: 'Data ownership & control',
     items: [
       'You own your data, always. We are the custodian, not the owner.',
-      'Export your memories as PDF memory books anytime (Premium feature)',
-      'Request complete data deletion at any time — your data is permanently removed within 30 days',
-      'If you cancel, your data is preserved for 90 days so you can return and pick up where you left off',
+      'Export anytime from Settings — a ZIP with full account data (JSON), printable memory stories (PDF), and a media manifest for photos, voice, and video',
+      'Delete your account from Settings — your memories, profile, groups, legacy settings, and uploaded media are removed immediately',
+      'Private memories stay visible only to you — they are not shared, scheduled for delivery, or included in legacy release',
     ],
   },
 ];
@@ -97,7 +97,7 @@ export default function PrivacySecurity() {
           <Shield className="w-10 h-10 text-primary mx-auto mb-3" />
           <h2 className="text-section-title mb-1">Your memories are sacred</h2>
           <p className="text-body text-muted-foreground leading-relaxed max-w-sm mx-auto">
-            We built ETRN8 with the belief that your most personal memories deserve the
+            We built ETERN8 with the belief that your most personal memories deserve the
             highest level of protection. Here&apos;s exactly how we keep them safe.
           </p>
         </KeepsakeCard>
@@ -159,24 +159,24 @@ export default function PrivacySecurity() {
           <h3 className="text-section-title mb-3">Data retention & deletion</h3>
           <div className="space-y-3 text-body text-muted-foreground leading-relaxed">
             <p>
-              <strong className="text-foreground">Active accounts:</strong> Your data is stored indefinitely
-              while your account remains active. Memories are dated and timestamped, creating a permanent
-              record of when each memory was created.
+              <strong className="text-foreground">Active accounts:</strong> Your data is stored while your account
+              remains active. Memories are dated and timestamped, creating a permanent record of when each memory
+              was created.
             </p>
             <p>
-              <strong className="text-foreground">Canceled accounts:</strong> Data is preserved for 90 days
-              after cancellation, giving you time to return. After 90 days, all personal data is permanently
-              deleted from our systems.
+              <strong className="text-foreground">Data export:</strong> Use Settings → Export my data to download
+              a ZIP with your full account data, printable memory stories, and a media manifest. Export links in
+              the manifest may expire depending on storage settings — download media promptly if you need local copies.
             </p>
             <p>
-              <strong className="text-foreground">Deletion requests:</strong> You can request complete account
-              deletion at any time. Within 30 days, all your data is permanently and irreversibly removed from
-              all systems and backups.
+              <strong className="text-foreground">Account deletion:</strong> Settings → Delete Account permanently
+              removes your memories, loved ones, groups you own, legacy settings, friendships, notifications, and
+              uploaded media immediately. This cannot be undone.
             </p>
             <p>
-              <strong className="text-foreground">Legacy delivery:</strong> Legacy-designated memories remain
-              sealed and encrypted until the full verification process completes. They are never accessible
-              to anyone — including ETRN8 staff — until that point.
+              <strong className="text-foreground">Legacy delivery:</strong> Memories included in legacy release
+              remain sealed until the full verification process completes. Private memories are never included.
+              Until release, legacy content is not accessible to anyone — including ETERN8 staff.
             </p>
           </div>
         </KeepsakeCard>

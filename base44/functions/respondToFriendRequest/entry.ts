@@ -31,6 +31,18 @@ Deno.serve(async (req) => {
 
     await base44.asServiceRole.entities.Friendship.update(friendshipId, { status: action });
 
+    const notifications = await base44.asServiceRole.entities.Notification.filter({
+      to_user_id: user.id,
+      from_user_id: friendship.from_user_id,
+      type: 'friend_request',
+      is_read: false,
+    });
+    await Promise.all(
+      notifications.map((n) =>
+        base44.asServiceRole.entities.Notification.update(n.id, { is_read: true }),
+      ),
+    );
+
     return Response.json({ success: true, status: action });
   } catch (_error) {
     return Response.json({ error: 'Could not respond to request' }, { status: 500 });

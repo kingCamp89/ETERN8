@@ -8,7 +8,7 @@ import LoadingSpinner from '@/components/shared/LoadingSpinner';
 import { format } from 'date-fns';
 import { motion } from 'framer-motion';
 import { useRef, useEffect, useState } from 'react';
-import { Calendar, Heart, Image, Mic, Video, Play, Pause, Users } from 'lucide-react';
+import { Calendar, Heart, Image, Mic, Play, Pause, Users } from 'lucide-react';
 import SafeImage from '@/components/shared/SafeImage';
 
 const themeColors = {

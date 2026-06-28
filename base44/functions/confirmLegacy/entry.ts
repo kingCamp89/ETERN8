@@ -447,7 +447,7 @@ Deno.serve(async (req) => {
           '',
           `${contact.name} confirmed that you are alive and well. Your legacy protocol has been cancelled.`,
           '',
-          'The ETRN8 Team',
+          'The ETERN8 Team',
         ].join('\n')
       );
 
@@ -567,7 +567,7 @@ Deno.serve(async (req) => {
               '',
               'IF YOU ARE ALIVE: OPEN THE APP IMMEDIATELY to cancel this process.',
               '',
-              'The ETRN8 Team',
+              'The ETERN8 Team',
             ].join('\n')
           );
         }

@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { requireInternalSecret } from '../_shared/internalAuth.ts';
 
 const MAX_DELIVERY_ATTEMPTS = 3;
 
@@ -11,6 +12,9 @@ const MAX_DELIVERY_ATTEMPTS = 3;
  */
 Deno.serve(async (req) => {
   try {
+    const authError = requireInternalSecret(req);
+    if (authError) return authError;
+
     const base44 = createClientFromRequest(req);
     const now = new Date();
     const todayStr = now.toISOString().split('T')[0];
@@ -63,6 +67,16 @@ Deno.serve(async (req) => {
 
     for (const memory of dueMemories) {
       const userId = memory.created_by_id;
+
+      if (memory.is_private) {
+        results.push({
+          memory_id: memory.id,
+          title: memory.title,
+          action: 'skipped',
+          reason: 'private_memory',
+        });
+        continue;
+      }
 
       // Check if user has an active legacy protocol
       const protocols = await base44.asServiceRole.entities.LegacyProtocol.filter({ user_id: userId });
@@ -176,9 +190,9 @@ Deno.serve(async (req) => {
       const escapeHtml = (str) => (str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
       const mediaLabels = {
-        photo: '📷 Photo — view in the ETRN8 app',
-        voice: '🎤 Voice recording — listen in the ETRN8 app',
-        video: '🎬 Video — watch in the ETRN8 app',
+        photo: '📷 Photo — view in the ETERN8 app',
+        voice: '🎤 Voice recording — listen in the ETERN8 app',
+        video: '🎬 Video — watch in the ETERN8 app',
       };
 
       const memoryChapters = memories.map((memory, idx) => {
@@ -212,7 +226,7 @@ Deno.serve(async (req) => {
   <div style="max-width:560px;margin:0 auto;padding:20px;">
     <div style="background:linear-gradient(135deg,#D46A8B,#F3A385);border-radius:16px 16px 0 0;padding:30px 20px;text-align:center;">
       <div style="width:50px;height:50px;background:white;border-radius:50%;line-height:50px;font-size:18px;font-weight:bold;color:#D46A8B;margin:0 auto 12px;font-family:Georgia,serif;">E8</div>
-      <h1 style="color:white;font-family:Georgia,serif;margin:0 0 4px;font-size:22px;font-weight:500;">ETRN8</h1>
+      <h1 style="color:white;font-family:Georgia,serif;margin:0 0 4px;font-size:22px;font-weight:500;">ETERN8</h1>
       <p style="color:rgba(255,255,255,0.85);margin:0;font-size:13px;font-family:Arial,sans-serif;">A message from the heart</p>
     </div>
     <div style="background:#fffdf9;padding:30px 25px;border-radius:0 0 16px 16px;border-left:1px solid #e8ddd0;border-right:1px solid #e8ddd0;border-bottom:1px solid #e8ddd0;">
@@ -224,7 +238,7 @@ Deno.serve(async (req) => {
       ${memoryChapters}
       <div style="text-align:center;border-top:1px solid #e8ddd0;padding-top:20px;margin-top:25px;">
         <p style="font-size:16px;color:#3a2a1a;margin:0 0 4px;font-family:Georgia,serif;">With love,</p>
-        <p style="font-family:Georgia,serif;font-style:italic;color:#a0928a;font-size:15px;margin:0;">The ETRN8 Team</p>
+        <p style="font-family:Georgia,serif;font-style:italic;color:#a0928a;font-size:15px;margin:0;">The ETERN8 Team</p>
       </div>
     </div>
   </div>
@@ -240,7 +254,7 @@ Deno.serve(async (req) => {
           to: recipientEmail,
           subject,
           body: htmlBody,
-          from_name: 'ETRN8',
+          from_name: 'ETERN8',
         });
 
         // Mark all memories in the group as delivered

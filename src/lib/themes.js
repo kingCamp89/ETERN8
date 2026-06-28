@@ -217,6 +217,8 @@ export function applyTheme(themeId) {
 }
 
 if (typeof window !== 'undefined') {
+  // Apply saved theme immediately on module load (keeps theme across page refreshes)
+  applyTheme(getGlobalTheme());
   window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
     applyTheme(getGlobalTheme());
   });

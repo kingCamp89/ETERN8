@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { User, X, MessageCircle, Heart } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { User, ChevronRight } from 'lucide-react';
 import SafeImage from '@/components/shared/SafeImage';
 import KeepsakeCard from '@/components/shared/KeepsakeCard';
 import LoadingSpinner from '@/components/shared/LoadingSpinner';
 import EmptyState from '@/components/shared/EmptyState';
+import FriendActionsSheet from '@/components/friends/FriendActionsSheet';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,8 +21,8 @@ import { toast } from 'sonner';
 
 export default function MyFriends({ onSelect, selectedIds = [], compact = false }) {
   const queryClient = useQueryClient();
-  const navigate = useNavigate();
   const [removeTarget, setRemoveTarget] = useState(null);
+  const [activeFriend, setActiveFriend] = useState(null);
   const { data: friendsData, isLoading } = useQuery({
     queryKey: ['myFriends'],
     queryFn: () => base44.functions.invoke('getMyFriends'),
@@ -74,10 +74,10 @@ export default function MyFriends({ onSelect, selectedIds = [], compact = false 
           <KeepsakeCard
             key={f.id}
             padding={false}
-            interactive={!!onSelect}
+            interactive
             className={`flex items-center gap-3 p-3 ${rowClass(isSelected)}`}
-            onClick={onSelect ? () => onSelect(f) : undefined}
-            role={onSelect ? 'button' : undefined}
+            onClick={onSelect ? () => onSelect(f) : () => setActiveFriend(f)}
+            role="button"
           >
             <div className="flex items-center gap-3 flex-1 min-w-0">
               <div className="w-11 h-11 rounded-full bg-secondary flex items-center justify-center overflow-hidden shrink-0">
@@ -94,37 +94,7 @@ export default function MyFriends({ onSelect, selectedIds = [], compact = false 
               </div>
             </div>
             {!onSelect && (
-              <div className="flex items-center gap-1">
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    const params = new URLSearchParams();
-                    params.set('fromFriend', 'true');
-                    params.set('name', f.full_name || '');
-                    if (f.photo_url) params.set('photo_url', f.photo_url);
-                    navigate(`/loved-ones/new?${params.toString()}`);
-                  }}
-                  className="p-1.5 rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors shrink-0"
-                  title="Add to My People"
-                >
-                  <Heart className="w-4 h-4" />
-                </button>
-                <Link
-                  to="/groups"
-                  className="p-1.5 rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors shrink-0"
-                  title="Circles"
-                >
-                  <MessageCircle className="w-4 h-4" />
-                </Link>
-                <button
-                  type="button"
-                  onClick={(e) => { e.stopPropagation(); setRemoveTarget(f); }}
-                  className="p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors shrink-0"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
+              <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
             )}
             {isSelected && (
               <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center shrink-0">
@@ -136,6 +106,13 @@ export default function MyFriends({ onSelect, selectedIds = [], compact = false 
           </KeepsakeCard>
         );
       })}
+
+      <FriendActionsSheet
+        friend={activeFriend}
+        open={!!activeFriend}
+        onOpenChange={(open) => !open && setActiveFriend(null)}
+        onRemove={setRemoveTarget}
+      />
 
       {/* Double-confirmation remove dialog */}
       <AlertDialog open={!!removeTarget} onOpenChange={(open) => !open && setRemoveTarget(null)}>

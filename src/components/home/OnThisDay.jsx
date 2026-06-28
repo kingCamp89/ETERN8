@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { format, isSameDay, isSameMonth, isSameWeek, subYears, subMonths, subWeeks } from 'date-fns';
+import { format, isSameDay, subYears, subMonths, subWeeks } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronRight } from 'lucide-react';
 import { BrandCalendar } from '@/components/shared/BrandIcons';

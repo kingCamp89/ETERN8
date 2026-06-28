@@ -1,9 +1,10 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { hashToken } from '../_shared/hashToken.ts';
 
 function generateToken() {
   const bytes = new Uint8Array(16);
   crypto.getRandomValues(bytes);
-  return Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
+  return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
 }
 
 Deno.serve(async (req) => {
@@ -33,8 +34,9 @@ Deno.serve(async (req) => {
     }
 
     const token = generateToken();
+    const tokenHash = await hashToken(token);
     const inviteTokens = [...(group.invite_tokens || []), {
-      token,
+      token_hash: tokenHash,
       created_at: new Date().toISOString(),
       used: false,
     }];
@@ -45,7 +47,7 @@ Deno.serve(async (req) => {
 
     const inviteLink = `${req.headers.get('origin') || 'https://yourapp.com'}/groups/${groupId}?invite=${token}`;
 
-    return Response.json({ success: true, token, inviteLink });
+    return Response.json({ success: true, inviteLink });
   } catch (_error) {
     return Response.json({ error: 'Could not generate invite' }, { status: 500 });
   }

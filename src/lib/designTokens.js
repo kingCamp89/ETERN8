@@ -1,5 +1,5 @@
 /**
- * ETRN8 Design System v1 — single source of truth for brand tokens.
+ * ETERN8 Design System v1 — single source of truth for brand tokens.
  * CSS variables in index.css are derived from these values.
  */
 
@@ -129,7 +129,7 @@ export const welcomeGreetings = [
   'Tomorrow will thank you for saving this today.',
 ];
 
-const WELCOME_GREETING_KEY = 'etrn8_last_welcome_greeting';
+const WELCOME_GREETING_KEY = 'etern8_last_welcome_greeting';
 
 /** Picks a greeting at random, avoiding the same line twice in a row per visit session. */
 export function getWelcomeGreeting() {

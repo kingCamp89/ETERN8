@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { internalPayload, requireInternalSecret } from '../_shared/internalAuth.ts';
 
 const COOLING_OFF_DAYS = 14;
 const QUORUM_REQUIRED = 2;
@@ -141,12 +142,12 @@ async function releaseMemories(base44, user, protocol, eligibleMemories, eligibl
 
     // Call validateRecipientOwnership — strict ID-based validation
     // Prevents cross-recipient content leakage
-    const ownership = await base44.asServiceRole.functions.invoke('validateRecipientOwnership', {
+    const ownership = await base44.asServiceRole.functions.invoke('validateRecipientOwnership', internalPayload({
       user_id: user.id,
       recipient_id: recipientId,
       memories: eligibleMemories,
       notes: eligibleNotes,
-    });
+    }));
 
     if (!ownership.data || !ownership.data.valid) {
       await logEvent(base44, user.id, 'recipient_validation_failed',
@@ -166,9 +167,9 @@ async function releaseMemories(base44, user, protocol, eligibleMemories, eligibl
       if (mem.memory_date) content += `Date: ${mem.memory_date}\n`;
       if (mem.scheduled_occasion) content += `Occasion: ${mem.scheduled_occasion}\n`;
       if (mem.content) content += `${mem.content}\n`;
-      if (mem.memory_type === 'photo') content += '[Photo — view in ETRN8 app]\n';
-      if (mem.memory_type === 'voice') content += '[Voice recording — listen in ETRN8 app]\n';
-      if (mem.memory_type === 'video') content += '[Video — watch in ETRN8 app]\n';
+      if (mem.memory_type === 'photo') content += '[Photo — view in ETERN8 app]\n';
+      if (mem.memory_type === 'voice') content += '[Voice recording — listen in ETERN8 app]\n';
+      if (mem.memory_type === 'video') content += '[Video — watch in ETERN8 app]\n';
       content += '---\n';
     }
 
@@ -192,7 +193,7 @@ async function releaseMemories(base44, user, protocol, eligibleMemories, eligibl
         'These memories were preserved with love and care.',
         '',
         'With care,',
-        'The ETRN8 Team',
+        'The ETERN8 Team',
       ].join('\n')
     );
 
@@ -218,6 +219,9 @@ async function releaseMemories(base44, user, protocol, eligibleMemories, eligibl
 
 Deno.serve(async (req) => {
   try {
+    const authError = requireInternalSecret(req);
+    if (authError) return authError;
+
     const base44 = createClientFromRequest(req);
     const origin = req.headers.get('origin') || 'https://app.base44.app';
     const now = new Date();
@@ -262,14 +266,14 @@ Deno.serve(async (req) => {
         [
           `Dear ${user.full_name || 'friend'},`,
           '',
-          `We noticed you haven't been active on ETRN8 in ${waitMonths} month(s).`,
+          `We noticed you haven't been active on ETERN8 in ${waitMonths} month(s).`,
           '',
           'Your legacy protocol has been started. This means we will begin reaching out to your trusted contacts to verify your wellbeing.',
           '',
           'If you are reading this, simply open the app to check in and cancel this process immediately.',
           '',
           'With care,',
-          'The ETRN8 Team',
+          'The ETERN8 Team',
         ].join('\n')
       );
 
@@ -306,7 +310,7 @@ Deno.serve(async (req) => {
         });
 
         await sendEmail(base44, user.email,
-          `Reminder: Please check in on ETRN8`,
+          `Reminder: Please check in on ETERN8`,
           [
             `Dear ${userName},`,
             '',
@@ -315,7 +319,7 @@ Deno.serve(async (req) => {
             'If you are reading this, open the app to check in and cancel the legacy process.',
             '',
             'With care,',
-            'The ETRN8 Team',
+            'The ETERN8 Team',
           ].join('\n')
         );
 
@@ -341,7 +345,7 @@ Deno.serve(async (req) => {
             '',
             'OPEN THE APP NOW to cancel this process.',
             '',
-            'The ETRN8 Team',
+            'The ETERN8 Team',
           ].join('\n')
         );
 
@@ -367,7 +371,7 @@ Deno.serve(async (req) => {
             '',
             'If you are still with us, PLEASE open the app immediately.',
             '',
-            'The ETRN8 Team',
+            'The ETERN8 Team',
           ].join('\n')
         );
 
@@ -412,7 +416,7 @@ Deno.serve(async (req) => {
               'There is no pressure — take the time you need.',
               '',
               'With care,',
-              'The ETRN8 Team',
+              'The ETERN8 Team',
             ].join('\n')
           );
 
@@ -460,7 +464,7 @@ Deno.serve(async (req) => {
               '',
               'After the cooling-off period, your legacy memories will be released to your recipients.',
               '',
-              'The ETRN8 Team',
+              'The ETERN8 Team',
             ].join('\n')
           );
 
@@ -479,7 +483,7 @@ Deno.serve(async (req) => {
                 'If you believe this is a mistake, please ask them to open the app.',
                 '',
                 'With care,',
-                'The ETRN8 Team',
+                'The ETERN8 Team',
               ].join('\n')
             );
           }
@@ -499,7 +503,7 @@ Deno.serve(async (req) => {
                 'After the cooling-off period, you will be asked to approve or pause the release.',
                 '',
                 'With care,',
-                'The ETRN8 Team',
+                'The ETERN8 Team',
               ].join('\n')
             );
           }
@@ -536,7 +540,7 @@ Deno.serve(async (req) => {
                 '',
                 'If you are reading this, open the app to designate an executor or cancel the process.',
                 '',
-                'The ETRN8 Team',
+                'The ETERN8 Team',
               ].join('\n')
             );
 
@@ -609,7 +613,7 @@ Deno.serve(async (req) => {
                 'You are the final safeguard. Take the time you need.',
                 '',
                 'With care,',
-                'The ETRN8 Team',
+                'The ETERN8 Team',
               ].join('\n')
             );
 
@@ -624,10 +628,10 @@ Deno.serve(async (req) => {
       // ── approved_for_release: execute the release with full validation pipeline ──
       else if (protocol.status === 'approved_for_release') {
         // Step 1: Call validateLegacyRelease — single source of truth for release authorization
-        const validation = await base44.asServiceRole.functions.invoke('validateLegacyRelease', {
+        const validation = await base44.asServiceRole.functions.invoke('validateLegacyRelease', internalPayload({
           protocol_id: protocol.id,
           user_id: user.id,
-        });
+        }));
 
         if (!validation.data || !validation.data.valid) {
           const reasons = validation.data?.reasons || ['Unknown validation failure'];
@@ -638,9 +642,9 @@ Deno.serve(async (req) => {
         }
 
         // Step 2: Call validateContentEligibility — get only eligible content
-        const eligibility = await base44.asServiceRole.functions.invoke('validateContentEligibility', {
+        const eligibility = await base44.asServiceRole.functions.invoke('validateContentEligibility', internalPayload({
           user_id: user.id,
-        });
+        }));
 
         if (!eligibility.data || !eligibility.data.valid) {
           await logEvent(base44, user.id, 'release_validation_failed',

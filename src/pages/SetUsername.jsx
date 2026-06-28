@@ -51,7 +51,7 @@ export default function SetUsername() {
     setError('');
     try {
       await base44.auth.updateMe({ username });
-      window.location.href = '/';
+      window.location.href = '/intro';
     } catch (err) {
       setError(err.message || 'Failed to set username');
     } finally {

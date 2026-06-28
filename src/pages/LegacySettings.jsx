@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Shield, UserPlus, Mail, Heart, X, CheckCircle2, AlertTriangle, CalendarClock, Fingerprint, Crown, Activity, PauseCircle, XCircle, Clock } from 'lucide-react';
+import { Shield, UserPlus, Heart, X, CheckCircle2, AlertTriangle, CalendarClock, Fingerprint, Crown, Activity, Clock } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { format, formatDistanceToNow } from 'date-fns';
 import { toast } from 'sonner';

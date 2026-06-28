@@ -1,7 +1,9 @@
 import { useState, useRef, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useAuth } from '@/lib/AuthContext';
 import useLovedOnes from '../hooks/useLovedOnes';
 import PageHeader from '../components/shared/PageHeader';
@@ -13,7 +15,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { FileText, Mic, Camera, Video, Upload, Heart, Calendar, Tag, Square } from 'lucide-react';
+import { FileText, Mic, Camera, Video, Upload, Heart, Calendar, Tag, Square, EyeOff } from 'lucide-react';
 import { useIsMobile } from '../hooks/use-mobile';
 import {
   Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger,
@@ -21,6 +23,13 @@ import {
 import SafeImage from '../components/shared/SafeImage';
 import GeotagInput from '../components/shared/GeotagInput';
 import ShareOptions from '../components/shared/ShareOptions';
+import { syncMemoryShares } from '../lib/syncMemoryShares';
+import {
+  buildMemoryFormDefaults,
+  getScheduledDeliveryError,
+  memoryFormSchema,
+  toMemoryPayload,
+} from '@/lib/schemas/memory';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const emotions = [
@@ -48,30 +57,52 @@ export default function CreateMemory() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const [searchParams] = useSearchParams();
+  const location = useLocation();
+  const shareFriendFromState = location.state?.shareWithFriend;
   const editId = searchParams.get('edit');
+  const forId = searchParams.get('for');
+  const shareWithId = searchParams.get('shareWith') || shareFriendFromState?.id || null;
+  const shareWithName = searchParams.get('shareWithName') || shareFriendFromState?.full_name || '';
   const initialType = searchParams.get('type') || 'text';
+  const forPrefilled = useRef(false);
   const [recording, setRecording] = useState(false);
   const mediaRecorderRef = useRef(null);
   const chunksRef = useRef([]);
   const [formReady, setFormReady] = useState(!editId);
-
-  const [form, setForm] = useState({
-    title: '', content: '', memory_type: initialType, loved_one_id: '',
-    loved_one_name: '', loved_one_photo_url: '', memory_date: new Date().toISOString().split('T')[0],
-    media_url: '', tags: [], emotion: '', is_scheduled: false,
-    scheduled_date: '', scheduled_time: '09:00', scheduled_occasion: '',
-    location_name: '', location_lat: null, location_lng: null,
-    share_with_ids: [], share_group_ids: [],
-    share_text: true, share_photo: true, share_voice: false, share_video: true,
-  });
   const [tagInput, setTagInput] = useState('');
   const [uploading, setUploading] = useState(false);
   const [scheduleError, setScheduleError] = useState('');
   const [recipientDrawerOpen, setRecipientDrawerOpen] = useState(false);
 
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    getValues,
+    watch,
+    reset,
+    formState: { errors },
+  } = useForm({
+    resolver: zodResolver(memoryFormSchema),
+    defaultValues: buildMemoryFormDefaults({ initialType, shareWithId }),
+  });
+
+  const form = watch();
+
   const isMobile = useIsMobile();
 
   const { data: lovedOnes = [] } = useLovedOnes();
+
+  useEffect(() => {
+    if (editId || !forId || forPrefilled.current || lovedOnes.length === 0) return;
+    const person = lovedOnes.find((p) => p.id === forId);
+    if (person) {
+      forPrefilled.current = true;
+      setValue('loved_one_id', person.id);
+      setValue('loved_one_name', person.name || '');
+      setValue('loved_one_photo_url', person.photo_url || '');
+    }
+  }, [forId, lovedOnes, editId, setValue]);
 
   // Load existing memory for editing
   const { data: existingMemory } = useQuery({
@@ -85,7 +116,7 @@ export default function CreateMemory() {
 
   useEffect(() => {
     if (existingMemory && !formReady) {
-      setForm({
+      reset({
         title: existingMemory.title || '',
         content: existingMemory.content || '',
         memory_type: existingMemory.memory_type || 'text',
@@ -101,8 +132,9 @@ export default function CreateMemory() {
         scheduled_time: existingMemory.scheduled_time || '09:00',
         scheduled_occasion: existingMemory.scheduled_occasion || '',
         location_name: existingMemory.location_name || '',
-        location_lat: existingMemory.location_lat || null,
-        location_lng: existingMemory.location_lng || null,
+        location_lat: existingMemory.location_lat ?? null,
+        location_lng: existingMemory.location_lng ?? null,
+        is_private: existingMemory.is_private !== false,
         share_with_ids: existingMemory.share_with_ids || [],
         share_group_ids: existingMemory.share_group_ids || [],
         share_text: existingMemory.share_text !== undefined ? existingMemory.share_text : true,
@@ -112,16 +144,25 @@ export default function CreateMemory() {
       });
       setFormReady(true);
     }
-  }, [existingMemory, formReady]);
+  }, [existingMemory, formReady, reset]);
 
   const createMutation = useMutation({
-    mutationFn: (data) => editId
-      ? base44.entities.Memory.update(editId, data)
-      : base44.entities.Memory.create(data),
-    onSuccess: () => {
+    mutationFn: async (data) => {
+      const memory = editId
+        ? await base44.entities.Memory.update(editId, data)
+        : await base44.entities.Memory.create(data);
+      const memoryId = memory?.id || editId;
+      if (memoryId && user && !data.is_private && (data.share_with_ids?.length > 0)) {
+        await syncMemoryShares({ ...memory, ...data, id: memoryId });
+      }
+      return memory;
+    },
+    onSuccess: (memory) => {
       queryClient.invalidateQueries({ queryKey: ['memories'] });
       queryClient.invalidateQueries({ queryKey: ['memory', editId] });
-      navigate(editId ? `/memory/${editId}` : '/');
+      queryClient.invalidateQueries({ queryKey: ['memoryShares'] });
+      queryClient.invalidateQueries({ queryKey: ['pendingShares'] });
+      navigate(editId ? `/memory/${editId}` : memory?.id ? `/memory/${memory.id}` : '/');
     },
     onError: (err) => {
       setScheduleError(err?.message || 'Failed to save. Please try again.');
@@ -136,13 +177,13 @@ export default function CreateMemory() {
       audio: ['audio/webm', 'audio/mp3', 'audio/m4a', 'audio/wav', 'audio/ogg'],
     };
 
-    const type = form.memory_type === 'voice' ? 'audio' : form.memory_type;
+    const memoryType = getValues('memory_type');
+    const type = memoryType === 'voice' ? 'audio' : memoryType;
     const allowedTypes = ALLOWED[type] || [];
     const maxSize = MAX_SIZES[type] || 20 * 1024 * 1024;
 
     if (!allowedTypes.includes(file.type)) {
-      const ext = file.name.split('.').pop()?.toLowerCase();
-      const extensions = allowedTypes.map(t => t.split('/')[1]).join(', ');
+      const extensions = allowedTypes.map((t) => t.split('/')[1]).join(', ');
       return `Unsupported file type. Allowed: ${extensions}`;
     }
     if (file.size > maxSize) {
@@ -159,7 +200,7 @@ export default function CreateMemory() {
     if (error) { setScheduleError(error); return; }
     setUploading(true);
     const { file_url } = await base44.integrations.Core.UploadFile({ file });
-    setForm(prev => ({ ...prev, media_url: file_url }));
+    setValue('media_url', file_url);
     setUploading(false);
   };
 
@@ -171,13 +212,13 @@ export default function CreateMemory() {
     mediaRecorder.ondataavailable = (e) => chunksRef.current.push(e.data);
     mediaRecorder.onstop = async () => {
       const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
-      if (blob.size > 10 * 1024 * 1024) { setScheduleError('Recording too large. Maximum: 10MB'); stream.getTracks().forEach(t => t.stop()); return; }
+      if (blob.size > 10 * 1024 * 1024) { setScheduleError('Recording too large. Maximum: 10MB'); stream.getTracks().forEach((t) => t.stop()); return; }
       const file = new File([blob], 'voice-memory.webm', { type: 'audio/webm' });
       setUploading(true);
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
-      setForm(prev => ({ ...prev, media_url: file_url }));
+      setValue('media_url', file_url);
       setUploading(false);
-      stream.getTracks().forEach(t => t.stop());
+      stream.getTracks().forEach((t) => t.stop());
     };
     mediaRecorder.start();
     setRecording(true);
@@ -189,58 +230,61 @@ export default function CreateMemory() {
   };
 
   const addTag = () => {
-    if (tagInput.trim() && !form.tags.includes(tagInput.trim())) {
-      setForm(prev => ({ ...prev, tags: [...prev.tags, tagInput.trim()] }));
+    const tags = getValues('tags');
+    if (tagInput.trim() && !tags.includes(tagInput.trim())) {
+      setValue('tags', [...tags, tagInput.trim()]);
       setTagInput('');
     }
   };
 
   const removeTag = (tag) => {
-    setForm(prev => ({ ...prev, tags: prev.tags.filter(t => t !== tag) }));
+    setValue('tags', getValues('tags').filter((t) => t !== tag));
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  const onSubmit = (values) => {
     setScheduleError('');
 
-    // If scheduling for someone without an email, show error
-    if (form.is_scheduled && form.loved_one_id) {
-      const person = lovedOnes.find(p => p.id === form.loved_one_id);
-      if (person && !person.email) {
-        setScheduleError('To schedule a delivery, this person needs an email address. You can add one in their profile — use a guardian\'s email for children.');
-        return;
-      }
+    const deliveryError = getScheduledDeliveryError(values, lovedOnes);
+    if (deliveryError) {
+      setScheduleError(deliveryError);
+      return;
     }
 
-    const data = {
-      ...form,
-      created_by_name: user?.display_name || user?.full_name || '',
-      created_by_photo_url: user?.photo_url || '',
-      // Set delivery fields automatically — no manual legacy marking needed
-      delivery_type: form.is_scheduled ? 'scheduled' : 'normal',
-      delivery_status: form.is_scheduled ? 'scheduled' : 'draft',
-      // Capture the user's timezone so the delivery processor can convert scheduled_time to UTC
-      scheduled_timezone: form.is_scheduled ? Intl.DateTimeFormat().resolvedOptions().timeZone : undefined,
-      // Set recipient based on loved one
-      recipient_ids: form.loved_one_id ? [form.loved_one_id] : [],
-      recipient_names: form.loved_one_name ? [form.loved_one_name] : [],
-    };
-    if (!data.emotion) delete data.emotion;
-    if (!data.scheduled_date) delete data.scheduled_date;
-    if (!data.scheduled_time) delete data.scheduled_time;
-    if (!data.scheduled_occasion) delete data.scheduled_occasion;
-    createMutation.mutate(data);
+    createMutation.mutate(toMemoryPayload(values, user));
   };
 
   const selectLovedOne = (id) => {
     setScheduleError('');
     if (!id) {
-      setForm(prev => ({ ...prev, loved_one_id: '', loved_one_name: '', loved_one_photo_url: '' }));
+      setValue('loved_one_id', '');
+      setValue('loved_one_name', '');
+      setValue('loved_one_photo_url', '');
     } else {
-      const person = lovedOnes.find(p => p.id === id);
-      setForm(prev => ({ ...prev, loved_one_id: id, loved_one_name: person?.name || '', loved_one_photo_url: person?.photo_url || '' }));
+      const person = lovedOnes.find((p) => p.id === id);
+      setValue('loved_one_id', id);
+      setValue('loved_one_name', person?.name || '');
+      setValue('loved_one_photo_url', person?.photo_url || '');
     }
     setRecipientDrawerOpen(false);
+  };
+
+  const setPrivate = (isPrivate) => {
+    setValue('is_private', isPrivate);
+    if (isPrivate) {
+      setValue('share_with_ids', []);
+      setValue('share_group_ids', []);
+      setValue('is_scheduled', false);
+      setValue('scheduled_date', '');
+      setValue('scheduled_occasion', '');
+    }
+  };
+
+  const updateShareOptions = (data) => {
+    Object.entries(data).forEach(([key, value]) => setValue(key, value));
+  };
+
+  const updateLocation = (loc) => {
+    Object.entries(loc).forEach(([key, value]) => setValue(key, value));
   };
 
   return (
@@ -255,7 +299,7 @@ export default function CreateMemory() {
         <CreateMemorySkeleton />
       ) : (
         <motion.form
-          onSubmit={handleSubmit}
+          onSubmit={handleSubmit(onSubmit)}
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.35 }}
@@ -271,7 +315,7 @@ export default function CreateMemory() {
                   <button
                     key={type}
                     type="button"
-                    onClick={() => setForm(prev => ({ ...prev, memory_type: type }))}
+                    onClick={() => setValue('memory_type', type)}
                     className={`flex-1 flex flex-col items-center gap-1.5 py-3 rounded-xl border transition-all duration-200 ${
                       isActive
                         ? 'border-primary bg-primary/10 shadow-sm'
@@ -350,11 +394,12 @@ export default function CreateMemory() {
               <Label>Title</Label>
               <Input
                 placeholder="Give this memory a name…"
-                value={form.title}
-                onChange={(e) => setForm(prev => ({ ...prev, title: e.target.value }))}
+                {...register('title')}
                 className="rounded-xl h-12"
-                required
               />
+              {errors.title && (
+                <p className="text-caption text-destructive">{errors.title.message}</p>
+              )}
             </div>
           </KeepsakeCard>
 
@@ -365,8 +410,7 @@ export default function CreateMemory() {
                   <Label>Your words</Label>
                   <Textarea
                     placeholder="Write from the heart…"
-                    value={form.content}
-                    onChange={(e) => setForm(prev => ({ ...prev, content: e.target.value }))}
+                    {...register('content')}
                     className="rounded-xl min-h-[150px] resize-none leading-relaxed text-body"
                   />
                 </motion.div>
@@ -394,7 +438,7 @@ export default function CreateMemory() {
                     ) : (
                       <div className="space-y-2">
                         <audio src={form.media_url} controls className="w-full" />
-                        <Button type="button" variant="ghost" size="sm" onClick={() => setForm(prev => ({ ...prev, media_url: '' }))}>
+                        <Button type="button" variant="ghost" size="sm" onClick={() => setValue('media_url', '')}>
                           Record again
                         </Button>
                       </div>
@@ -402,8 +446,7 @@ export default function CreateMemory() {
                   </div>
                   <Textarea
                     placeholder="Add a note about this recording (optional)…"
-                    value={form.content}
-                    onChange={(e) => setForm(prev => ({ ...prev, content: e.target.value }))}
+                    {...register('content')}
                     className="rounded-xl min-h-[80px] resize-none text-body"
                   />
                 </motion.div>
@@ -429,15 +472,14 @@ export default function CreateMemory() {
                       ) : (
                         <video src={form.media_url} controls className="w-full rounded-2xl" />
                       )}
-                      <Button type="button" variant="ghost" size="sm" onClick={() => setForm(prev => ({ ...prev, media_url: '' }))}>
+                      <Button type="button" variant="ghost" size="sm" onClick={() => setValue('media_url', '')}>
                         Choose different file
                       </Button>
                     </div>
                   )}
                   <Textarea
                     placeholder="Describe this moment (optional)…"
-                    value={form.content}
-                    onChange={(e) => setForm(prev => ({ ...prev, content: e.target.value }))}
+                    {...register('content')}
                     className="rounded-xl min-h-[80px] resize-none text-body"
                   />
                 </motion.div>
@@ -452,8 +494,7 @@ export default function CreateMemory() {
               </Label>
               <Input
                 type="date"
-                value={form.memory_date}
-                onChange={(e) => setForm(prev => ({ ...prev, memory_date: e.target.value }))}
+                {...register('memory_date')}
                 className="rounded-xl h-12"
               />
             </div>
@@ -465,7 +506,7 @@ export default function CreateMemory() {
                   <button
                     key={em.value}
                     type="button"
-                    onClick={() => setForm(prev => ({ ...prev, emotion: prev.emotion === em.value ? '' : em.value }))}
+                    onClick={() => setValue('emotion', form.emotion === em.value ? '' : em.value)}
                     className={`px-3 py-1.5 rounded-full text-caption border transition-all ${
                       form.emotion === em.value
                         ? 'border-primary bg-primary/10 text-primary font-medium'
@@ -512,12 +553,30 @@ export default function CreateMemory() {
           <KeepsakeCard className="space-y-3">
             <div className="flex items-center justify-between gap-4">
               <div>
+                <p className="text-body font-medium flex items-center gap-1.5">
+                  <EyeOff className="w-3.5 h-3.5" /> Keep this memory private
+                </p>
+                <p className="text-caption mt-0.5">
+                  Only you can see it — not shared, scheduled, or included in legacy delivery
+                </p>
+              </div>
+              <Switch
+                checked={form.is_private}
+                onCheckedChange={setPrivate}
+              />
+            </div>
+          </KeepsakeCard>
+
+          {!form.is_private && (
+          <KeepsakeCard className="space-y-3">
+            <div className="flex items-center justify-between gap-4">
+              <div>
                 <p className="text-body font-medium">Schedule for future delivery</p>
                 <p className="text-caption mt-0.5">Revealed on a special day</p>
               </div>
               <Switch
                 checked={form.is_scheduled}
-                onCheckedChange={(v) => setForm(prev => ({ ...prev, is_scheduled: v }))}
+                onCheckedChange={(v) => setValue('is_scheduled', v)}
               />
             </div>
             {form.is_scheduled && (
@@ -525,13 +584,12 @@ export default function CreateMemory() {
                 <div className="flex gap-2">
                   <Input
                     type="date"
-                    value={form.scheduled_date}
-                    onChange={(e) => setForm(prev => ({ ...prev, scheduled_date: e.target.value }))}
+                    {...register('scheduled_date')}
                     className="rounded-xl h-10 flex-1"
                   />
                   <Select
                     value={form.scheduled_time || '09:00'}
-                    onValueChange={(v) => setForm(prev => ({ ...prev, scheduled_time: v }))}
+                    onValueChange={(v) => setValue('scheduled_time', v)}
                   >
                     <SelectTrigger className="rounded-xl h-10 w-32">
                       <SelectValue placeholder="9:00 AM" />
@@ -551,32 +609,46 @@ export default function CreateMemory() {
                 </div>
                 <Input
                   placeholder="Occasion (e.g., 18th birthday, wedding day)"
-                  value={form.scheduled_occasion}
-                  onChange={(e) => setForm(prev => ({ ...prev, scheduled_occasion: e.target.value }))}
+                  {...register('scheduled_occasion')}
                   className="rounded-xl h-10"
                 />
               </motion.div>
             )}
           </KeepsakeCard>
+          )}
 
           <KeepsakeCard>
             <GeotagInput
               locationName={form.location_name}
-              onLocationChange={(loc) => setForm(prev => ({ ...prev, ...loc }))}
+              onLocationChange={updateLocation}
             />
           </KeepsakeCard>
 
+          {!form.is_private && (
           <KeepsakeCard>
             <ShareOptions
+              key={shareWithId || 'share'}
               shareWithIds={form.share_with_ids}
               shareGroupIds={form.share_group_ids}
               shareText={form.share_text}
               sharePhoto={form.share_photo}
               shareVoice={form.share_voice}
               shareVideo={form.share_video}
-              onChange={(data) => setForm(prev => ({ ...prev, ...data }))}
+              defaultExpandFriends={Boolean(shareWithId) || (form.share_with_ids?.length > 0)}
+              prefilledFriends={
+                shareWithId
+                  ? [{
+                    id: shareWithId,
+                    full_name: shareWithName || shareFriendFromState?.full_name || 'Friend',
+                    photo_url: shareFriendFromState?.photo_url || '',
+                    username: shareFriendFromState?.username || '',
+                  }]
+                  : []
+              }
+              onChange={updateShareOptions}
             />
           </KeepsakeCard>
+          )}
 
           {scheduleError && (
             <motion.p
@@ -590,7 +662,7 @@ export default function CreateMemory() {
 
           <Button
             type="submit"
-            disabled={!form.title || createMutation.isPending}
+            disabled={createMutation.isPending}
             className="w-full h-12 rounded-xl gap-2"
           >
             <Heart className="w-4 h-4" />

@@ -1,4 +1,5 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
@@ -11,7 +12,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Plus, ChevronRight, Share2, Users, Trash2, Check, Camera, RefreshCw, AlertCircle } from 'lucide-react';
+import { Plus, ChevronRight, Share2, Users, Trash2, Camera } from 'lucide-react';
+import QueryErrorState from '@/components/shared/QueryErrorState';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -38,6 +40,8 @@ const coverColors = ['rose', 'gold', 'sky', 'sage', 'lavender', 'coral'];
 
 export default function Groups() {
   const queryClient = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const createPrefilled = useRef(false);
   const [showCreate, setShowCreate] = useState(false);
   const [form, setForm] = useState({ name: '', description: '', cover_color: 'rose' });
   const [selectedFriends, setSelectedFriends] = useState([]);
@@ -57,12 +61,11 @@ export default function Groups() {
 
   const { indicatorRef } = usePullToRefresh(handleRefresh);
 
-  const { data: groups = [], isLoading: groupsLoading, error: groupsError, isError: groupsIsError, refetch: refetchGroups } = useQuery({
+  const { data: groups = [], isLoading: groupsLoading, isError: groupsIsError, refetch: refetchGroups } = useQuery({
     queryKey: ['myGroups'],
     queryFn: async () => {
-      const me = await base44.auth.me();
-      if (!me) return [];
-      return base44.entities.MemoryGroup.filter({ created_by_id: me.id }, '-created_date');
+      const { data } = await base44.functions.invoke('getMyGroups', {});
+      return data?.groups || [];
     },
     retry: 2,
     staleTime: 0,
@@ -118,6 +121,28 @@ export default function Groups() {
       return [...prev, friend];
     });
   };
+
+  useEffect(() => {
+    if (createPrefilled.current) return;
+    const shouldCreate = searchParams.get('create') === '1';
+    const friendId = searchParams.get('friend');
+    if (!shouldCreate) return;
+
+    createPrefilled.current = true;
+    setShowCreate(true);
+
+    if (friendId) {
+      base44.functions.invoke('getMyFriends').then((res) => {
+        const friend = res?.data?.friends?.find((f) => f.id === friendId);
+        if (friend) setSelectedFriends([friend]);
+      });
+    }
+
+    const next = new URLSearchParams(searchParams);
+    next.delete('create');
+    next.delete('friend');
+    setSearchParams(next, { replace: true });
+  }, [searchParams, setSearchParams]);
 
   return (
     <div className="min-h-screen relative">
@@ -185,13 +210,13 @@ export default function Groups() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Group photo</Label>
+                  <Label>Circle photo</Label>
                   <label className="cursor-pointer flex items-center gap-3">
                     <div className="w-16 h-16 rounded-2xl bg-secondary border-2 border-dashed border-primary/30 flex items-center justify-center overflow-hidden hover:border-primary/60 transition-colors">
                       {uploadingPhoto ? (
                         <div className="w-5 h-5 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
                       ) : groupPhoto ? (
-                        <SafeImage src={groupPhoto} alt="Group" className="w-full h-full object-cover" />
+                        <SafeImage src={groupPhoto} alt="Circle photo" className="w-full h-full object-cover" />
                       ) : (
                         <Camera className="w-6 h-6 text-primary/50" />
                       )}
@@ -297,22 +322,10 @@ export default function Groups() {
             <LoadingSpinner size="md" />
           </div>
         ) : groupsIsError ? (
-          <KeepsakeCard className="text-center py-10">
-            <div className="w-14 h-14 rounded-2xl bg-destructive/10 flex items-center justify-center mx-auto mb-4">
-              <AlertCircle className="w-7 h-7 text-destructive/60" />
-            </div>
-            <h3 className="text-section-title mb-2">Couldn&apos;t load circles</h3>
-            <p className="text-caption max-w-xs mx-auto mb-4">
-              Something went wrong. Check your connection and try again.
-            </p>
-            <Button
-              onClick={() => refetchGroups()}
-              variant="outline"
-              className="rounded-xl gap-2"
-            >
-              <RefreshCw className="w-4 h-4" /> Retry
-            </Button>
-          </KeepsakeCard>
+          <QueryErrorState
+            title="Couldn't load circles"
+            onRetry={() => refetchGroups()}
+          />
         ) : groups.length === 0 ? (
           <EmptyState
             prompt="Share moments with your circle"

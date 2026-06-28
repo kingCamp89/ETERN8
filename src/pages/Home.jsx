@@ -13,6 +13,7 @@ import TodaysDeliveries from '../components/home/TodaysDeliveries';
 import UpcomingDeliveries from '../components/home/UpcomingDeliveries';
 import QuickNote from '../components/home/QuickNote';
 import OnThisDay from '../components/home/OnThisDay';
+import PendingSharesBanner from '../components/home/PendingSharesBanner';
 import HomeSkeleton from '../components/home/HomeSkeleton';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
 import SectionHeader from '../components/shared/SectionHeader';
@@ -82,6 +83,10 @@ export default function Home() {
         ) : (
           <>
             <LovedOneCircles lovedOnes={lovedOnes} />
+
+            <motion.div {...sectionMotion} transition={{ ...sectionMotion.transition, delay: springs.stagger * 0.5 }}>
+              <PendingSharesBanner />
+            </motion.div>
 
             <motion.div {...sectionMotion} transition={{ ...sectionMotion.transition, delay: springs.stagger }}>
               <QuickNote />

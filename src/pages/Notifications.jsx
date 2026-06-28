@@ -75,7 +75,11 @@ export default function NotificationsPage() {
     if (!notification.is_read) {
       markReadMutation.mutate(notification.id);
     }
-    if (notification.memory_id) {
+    if (notification.type === 'friend_request') {
+      navigate('/friends');
+    } else if (notification.type === 'share') {
+      navigate('/shared');
+    } else if (notification.memory_id) {
       navigate(`/memory/${notification.memory_id}`);
     } else if (notification.group_id) {
       navigate(`/groups/${notification.group_id}`);

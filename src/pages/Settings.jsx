@@ -9,9 +9,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { 
   Shield, Clock, BookOpen, Crown, LogOut, Search,
-  ChevronRight, User, Lock, HelpCircle, Trash2,
+  ChevronRight, Lock, HelpCircle, Trash2,
   Users, Share2, Pencil, Check, X, Camera, UserRoundPlus,
-  Heart
+  Heart, Download, NotebookPen
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import SafeImage from '../components/shared/SafeImage';
@@ -23,12 +23,17 @@ import {
   AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
   AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { exportUserDataPackage } from '../lib/exportUserData';
+import TemplatePickerDialog from '../components/memorybooks/TemplatePickerDialog';
+import { toast } from 'sonner';
+import { validateImageUpload } from '@/lib/validateImageUpload';
 
 const menuSections = [
   {
     title: 'Memories',
     items: [
       { icon: Clock, label: 'Future Deliveries', path: '/future-deliveries', desc: 'Scheduled memories' },
+      { icon: NotebookPen, label: 'Private Notes', path: '/private-notes', desc: 'Words only you can see' },
       { icon: Shield, label: 'Legacy Settings', path: '/legacy', desc: 'Posthumous delivery' },
       { icon: BookOpen, label: 'Memory Books', path: '/memory-books', desc: 'Create printable books' },
       { icon: Search, label: 'Search Memories', path: '/search', desc: 'Find in your memories' },
@@ -38,15 +43,15 @@ const menuSections = [
     title: 'Sharing',
     items: [
       { icon: UserRoundPlus, label: 'Friends', path: '/friends', desc: 'Connect with family & friends' },
-      { icon: Users, label: 'Groups', path: '/groups', desc: 'Manage sharing groups' },
+      { icon: Users, label: 'Circles', path: '/groups', desc: 'Manage sharing circles' },
       { icon: Share2, label: 'Shared With You', path: '/shared', desc: 'Memories others have shared' },
     ],
   },
   {
     title: 'Account',
     items: [
-      { icon: Heart, label: 'Our Story', path: '/our-story', desc: 'Why we built ETRN8 & how to use it' },
-      { icon: Crown, label: 'Subscription', path: '/subscription', desc: 'Manage your plan' },
+      { icon: Heart, label: 'Our Story', path: '/our-story', desc: 'Why we built ETERN8 & how to use it' },
+      { icon: Crown, label: 'Subscription', path: '/subscription', desc: 'Compare plans' },
       { icon: Lock, label: 'Security & Privacy', path: '/privacy', desc: 'How we protect your data' },
       { icon: HelpCircle, label: 'Help & FAQ', path: '/help', desc: 'Get help and answers' },
     ],
@@ -58,12 +63,17 @@ export default function Settings() {
   const [globalTheme, setGlobalThemeState] = useState(getGlobalTheme);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
   const [showIntro, setShowIntro] = useState(false);
   const [editingName, setEditingName] = useState(false);
   const [nameValue, setNameValue] = useState('');
   const [editingUsername, setEditingUsername] = useState(false);
   const [usernameValue, setUsernameValue] = useState('');
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [exportLoading, setExportLoading] = useState(false);
+  const [exportStatus, setExportStatus] = useState('');
+  const [exportError, setExportError] = useState('');
+  const [showExportTemplatePicker, setShowExportTemplatePicker] = useState(false);
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -77,11 +87,25 @@ export default function Settings() {
   const handlePhotoUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    const error = validateImageUpload(file);
+    if (error) {
+      toast.error(error);
+      e.target.value = '';
+      return;
+    }
+
     setUploadingPhoto(true);
-    const { file_url } = await base44.integrations.Core.UploadFile({ file });
-    const updated = await base44.auth.updateMe({ photo_url: file_url });
-    setUser(updated);
-    setUploadingPhoto(false);
+    try {
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      const updated = await base44.auth.updateMe({ photo_url: file_url });
+      setUser(updated);
+    } catch {
+      toast.error('Failed to upload photo');
+    } finally {
+      setUploadingPhoto(false);
+      e.target.value = '';
+    }
   };
 
   const updateNameMutation = useMutation({
@@ -99,35 +123,12 @@ export default function Settings() {
 
   const handleDeleteAccount = async () => {
     setDeleteLoading(true);
+    setDeleteError('');
     try {
-      // Delete all user-owned entities first
-      // Memories
-      const memories = await base44.entities.Memory.filter({ created_by_id: user.id });
-      await Promise.all(memories.map(m => base44.entities.Memory.delete(m.id)));
-      // LovedOnes
-      const lovedOnes = await base44.entities.LovedOne.list();
-      await Promise.all(lovedOnes.map(l => base44.entities.LovedOne.delete(l.id)));
-      // Groups
-      const groups = await base44.entities.MemoryGroup.list();
-      await Promise.all(groups.map(g => base44.entities.MemoryGroup.delete(g.id)));
-      // MemoryBooks
-      const books = await base44.entities.MemoryBook.list();
-      await Promise.all(books.map(b => base44.entities.MemoryBook.delete(b.id)));
-      // TrustedContacts
-      const contacts = await base44.entities.TrustedContact.list();
-      await Promise.all(contacts.map(c => base44.entities.TrustedContact.delete(c.id)));
-      // LegacyAuditLogs
-      const logs = await base44.entities.LegacyAuditLog.list();
-      await Promise.all(logs.map(l => base44.entities.LegacyAuditLog.delete(l.id)));
-      // MemoryInteractions (where user is creator)
-      const interactions = await base44.entities.MemoryInteraction.list();
-      await Promise.all(interactions.map(i => base44.entities.MemoryInteraction.delete(i.id)));
-      // MemoryShares (where user is creator)
-      const shares = await base44.entities.MemoryShare.list();
-      await Promise.all(shares.map(s => base44.entities.MemoryShare.delete(s.id)));
-
-      // After deleting all user data, log the user out and redirect to login.
+      await base44.functions.invoke('deleteAccount', {});
       await base44.auth.logout('/login');
+    } catch (err) {
+      setDeleteError(err?.message || 'Could not delete account. Please try again or contact support.');
     } finally {
       setDeleteLoading(false);
     }
@@ -137,6 +138,26 @@ export default function Settings() {
     setGlobalTheme(id);
     setGlobalThemeState(id);
     applyTheme(id);
+  };
+
+  const handleExportData = async (templateId) => {
+    setExportLoading(true);
+    setExportError('');
+    setExportStatus('Starting export…');
+    setShowExportTemplatePicker(false);
+    try {
+      await exportUserDataPackage(base44, {
+        templateId,
+        onProgress: setExportStatus,
+      });
+      setExportStatus('Download started — check your downloads folder.');
+    } catch (err) {
+      console.error('Export failed:', err);
+      setExportError(err?.message || 'Could not export your data. Please try again.');
+      setExportStatus('');
+    } finally {
+      setExportLoading(false);
+    }
   };
 
   const { data: memories = [] } = useQuery({
@@ -307,6 +328,35 @@ export default function Settings() {
           <ThemePicker value={globalTheme} onChange={handleThemeChange} label="" />
         </KeepsakeCard>
 
+        <KeepsakeCard>
+          <div className="flex items-start gap-3 mb-3">
+            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+              <Download className="w-5 h-5 text-primary" />
+            </div>
+            <div className="flex-1">
+              <h3 className="text-section-title">Export my data</h3>
+              <p className="text-caption leading-relaxed mt-1">
+                Download a ZIP with your full account data, printable memory stories (quoted messages),
+                and a media guide for voice recordings and videos.
+              </p>
+            </div>
+          </div>
+          <Button
+            className="w-full rounded-xl gap-2"
+            onClick={() => setShowExportTemplatePicker(true)}
+            disabled={exportLoading}
+          >
+            <Download className="w-4 h-4" />
+            {exportLoading ? 'Preparing export…' : 'Download data export'}
+          </Button>
+          {exportStatus && !exportError && (
+            <p className="text-caption text-muted-foreground mt-2">{exportStatus}</p>
+          )}
+          {exportError && (
+            <p className="text-caption text-destructive mt-2">{exportError}</p>
+          )}
+        </KeepsakeCard>
+
         {menuSections.map((section) => (
           <div key={section.title}>
             <h3 className="text-overline mb-2 px-1">
@@ -357,7 +407,7 @@ export default function Settings() {
         <Button
           variant="ghost"
           className="w-full text-destructive/70 hover:bg-destructive/5 rounded-xl"
-          onClick={() => setShowDeleteDialog(true)}
+          onClick={() => { setDeleteError(''); setShowDeleteDialog(true); }}
         >
           <Trash2 className="w-4 h-4 mr-2" />
           Delete Account
@@ -371,6 +421,9 @@ export default function Settings() {
             <AlertDialogDescription>
               This will permanently delete all your data and memories immediately. This action cannot be undone.
             </AlertDialogDescription>
+            {deleteError && (
+              <p className="text-sm text-destructive mt-2">{deleteError}</p>
+            )}
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel className="rounded-xl">Cancel</AlertDialogCancel>
@@ -386,6 +439,13 @@ export default function Settings() {
       </AlertDialog>
 
       <IntroDialog open={showIntro} onClose={() => setShowIntro(false)} />
+
+      <TemplatePickerDialog
+        open={showExportTemplatePicker}
+        onOpenChange={setShowExportTemplatePicker}
+        onGenerate={handleExportData}
+        isGenerating={exportLoading}
+      />
     </div>
   );
 }

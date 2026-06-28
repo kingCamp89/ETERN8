@@ -91,7 +91,7 @@
     "event_type"
   ],
   "rls": {
-    "create": {},
+    "create": false,
     "read": {
       "created_by_id": "{{user.id}}"
     },

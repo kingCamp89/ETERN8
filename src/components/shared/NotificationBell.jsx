@@ -19,7 +19,7 @@ export default function NotificationBell({ className }) {
     queryFn: () => base44.functions.invoke('getMyPendingRequests'),
   });
 
-  const pendingRequests = friendRequests?.data?.requests?.length || 0;
+  const pendingRequests = friendRequests?.data?.incoming?.length || 0;
   const totalBadge = unreadCount + pendingRequests;
 
   return (

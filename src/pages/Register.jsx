@@ -86,7 +86,7 @@ export default function Register() {
       base44.auth.setToken(res.access_token);
       await new Promise(r => setTimeout(r, 300));
       await base44.auth.updateMe({ username });
-      window.location.href = '/';
+      window.location.href = '/intro';
     } catch (err) {
       setError(err.message || 'Invalid code');
     } finally {

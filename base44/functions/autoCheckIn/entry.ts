@@ -82,13 +82,13 @@ Deno.serve(async (req) => {
       const cancelMsg = [
         `Dear trusted contact,`,
         '',
-        `Good news — ${userName} has been active on ETRN8.`,
+        `Good news — ${userName} has been active on ETERN8.`,
         '',
         'The legacy verification process has been cancelled.',
         'No further action is required from you at this time.',
         '',
         'With care,',
-        'The ETRN8 Team',
+        'The ETERN8 Team',
       ].join('\n');
 
       for (const contact of verifiedContacts) {
@@ -111,13 +111,13 @@ Deno.serve(async (req) => {
             body: [
               `Dear ${executor.full_name},`,
               '',
-              `Good news — ${userName} has been active on ETRN8.`,
+              `Good news — ${userName} has been active on ETERN8.`,
               '',
               'The legacy verification process has been cancelled.',
               'No further action is required from you at this time.',
               '',
               'With care,',
-              'The ETRN8 Team',
+              'The ETERN8 Team',
             ].join('\n'),
           });
         } catch (e) {

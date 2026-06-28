@@ -1,7 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import PageHeader from '../components/shared/PageHeader';
 import ProfileAvatar from '../components/shared/ProfileAvatar';
 import KeepsakeCard from '../components/shared/KeepsakeCard';
@@ -16,42 +18,40 @@ import {
   Drawer, DrawerClose, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger,
 } from '@/components/ui/drawer';
 import { motion } from 'framer-motion';
-
-const relationships = [
-  { value: 'daughter', label: 'Daughter' },
-  { value: 'son', label: 'Son' },
-  { value: 'wife', label: 'Wife' },
-  { value: 'husband', label: 'Husband' },
-  { value: 'mother', label: 'Mother' },
-  { value: 'father', label: 'Father' },
-  { value: 'grandchild', label: 'Grandchild' },
-  { value: 'grandmother', label: 'Grandmother' },
-  { value: 'grandfather', label: 'Grandfather' },
-  { value: 'sister', label: 'Sister' },
-  { value: 'brother', label: 'Brother' },
-  { value: 'niece', label: 'Niece' },
-  { value: 'nephew', label: 'Nephew' },
-  { value: 'friend', label: 'Friend' },
-  { value: 'partner', label: 'Partner' },
-  { value: 'other', label: 'Other' },
-];
+import { toast } from 'sonner';
+import { validateImageUpload } from '@/lib/validateImageUpload';
+import { LOVED_ONE_RELATIONSHIPS } from '@/lib/schemas/relationships';
+import { lovedOneFormDefaults, lovedOneFormSchema } from '@/lib/schemas/lovedOne';
 
 export default function AddLovedOne() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [searchParams] = useSearchParams();
-  const [form, setForm] = useState({
-    name: '', relationship: '', date_of_birth: '', met_date: '', personal_notes: '', photo_url: '', email: '',
-  });
   const [uploading, setUploading] = useState(false);
   const isMobile = useIsMobile();
 
+  const {
+    register,
+    handleSubmit,
+    control,
+    setValue,
+    watch,
+    formState: { errors, isSubmitting },
+  } = useForm({
+    resolver: zodResolver(lovedOneFormSchema),
+    defaultValues: lovedOneFormDefaults,
+  });
+
+  const photoUrl = watch('photo_url');
+  const name = watch('name');
+  const relationship = watch('relationship');
+
   useEffect(() => {
-    const name = searchParams.get('name');
-    const photoUrl = searchParams.get('photo_url');
-    if (name) setForm(prev => ({ ...prev, name }));
-    if (photoUrl) setForm(prev => ({ ...prev, photo_url: photoUrl }));
-  }, [searchParams]);
+    const prefilledName = searchParams.get('name');
+    const prefilledPhoto = searchParams.get('photo_url');
+    if (prefilledName) setValue('name', prefilledName);
+    if (prefilledPhoto) setValue('photo_url', prefilledPhoto);
+  }, [searchParams, setValue]);
 
   const createMutation = useMutation({
     mutationFn: async (data) => {
@@ -67,15 +67,28 @@ export default function AddLovedOne() {
   const handlePhotoUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    const error = validateImageUpload(file);
+    if (error) {
+      toast.error(error);
+      e.target.value = '';
+      return;
+    }
+
     setUploading(true);
-    const { file_url } = await base44.integrations.Core.UploadFile({ file });
-    setForm(prev => ({ ...prev, photo_url: file_url }));
-    setUploading(false);
+    try {
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      setValue('photo_url', file_url);
+    } catch {
+      toast.error('Failed to upload photo');
+    } finally {
+      setUploading(false);
+      e.target.value = '';
+    }
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    createMutation.mutate(form);
+  const onSubmit = (data) => {
+    createMutation.mutate(data);
   };
 
   return (
@@ -83,7 +96,7 @@ export default function AddLovedOne() {
       <PageHeader title="Add Someone Special" showBack />
 
       <motion.form
-        onSubmit={handleSubmit}
+        onSubmit={handleSubmit(onSubmit)}
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35 }}
@@ -92,8 +105,8 @@ export default function AddLovedOne() {
         <KeepsakeCard padding={false} className="p-6 text-center">
           <label className="cursor-pointer inline-block">
             <input type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} />
-            {form.photo_url ? (
-              <ProfileAvatar src={form.photo_url} name={form.name} size="xl" className="mx-auto" glow />
+            {photoUrl ? (
+              <ProfileAvatar src={photoUrl} name={name} size="xl" className="mx-auto" glow />
             ) : (
               <div className="w-24 h-24 rounded-full mx-auto bg-secondary border-2 border-dashed border-primary/30 flex flex-col items-center justify-center hover:border-primary/50 transition-colors">
                 <Camera className="w-6 h-6 text-muted-foreground" />
@@ -113,11 +126,12 @@ export default function AddLovedOne() {
             <Label>Name</Label>
             <Input
               placeholder="Their name"
-              value={form.name}
-              onChange={(e) => setForm(prev => ({ ...prev, name: e.target.value }))}
+              {...register('name')}
               className="rounded-xl h-12"
-              required
             />
+            {errors.name && (
+              <p className="text-caption text-destructive">{errors.name.message}</p>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -126,7 +140,9 @@ export default function AddLovedOne() {
               <Drawer>
                 <DrawerTrigger asChild>
                   <button type="button" className="w-full rounded-xl h-12 border border-input bg-transparent px-3 flex items-center justify-between text-body">
-                    {form.relationship ? relationships.find(r => r.value === form.relationship)?.label : 'Select relationship'}
+                    {relationship
+                      ? LOVED_ONE_RELATIONSHIPS.find((r) => r.value === relationship)?.label
+                      : 'Select relationship'}
                   </button>
                 </DrawerTrigger>
                 <DrawerContent className="rounded-t-2xl">
@@ -134,33 +150,50 @@ export default function AddLovedOne() {
                     <DrawerTitle className="text-section-title">Relationship</DrawerTitle>
                   </DrawerHeader>
                   <div className="px-4 pb-8 space-y-1 max-h-64 overflow-y-auto">
-                    {relationships.map(r => (
-                      <DrawerClose key={r.value} asChild>
-                        <button
-                          type="button"
-                          onClick={() => setForm(prev => ({ ...prev, relationship: r.value }))}
-                          className={`w-full text-left px-4 py-3 rounded-xl transition-colors text-body ${
-                            form.relationship === r.value ? 'bg-primary/10 text-primary font-medium' : 'hover:bg-secondary'
-                          }`}
-                        >
-                          {r.label}
-                        </button>
-                      </DrawerClose>
-                    ))}
+                    <Controller
+                      name="relationship"
+                      control={control}
+                      render={({ field }) => (
+                        <>
+                          {LOVED_ONE_RELATIONSHIPS.map((r) => (
+                            <DrawerClose key={r.value} asChild>
+                              <button
+                                type="button"
+                                onClick={() => field.onChange(r.value)}
+                                className={`w-full text-left px-4 py-3 rounded-xl transition-colors text-body ${
+                                  relationship === r.value ? 'bg-primary/10 text-primary font-medium' : 'hover:bg-secondary'
+                                }`}
+                              >
+                                {r.label}
+                              </button>
+                            </DrawerClose>
+                          ))}
+                        </>
+                      )}
+                    />
                   </div>
                 </DrawerContent>
               </Drawer>
             ) : (
-              <Select value={form.relationship} onValueChange={(v) => setForm(prev => ({ ...prev, relationship: v }))}>
-                <SelectTrigger className="rounded-xl h-12">
-                  <SelectValue placeholder="Select relationship" />
-                </SelectTrigger>
-                <SelectContent>
-                  {relationships.map(r => (
-                    <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Controller
+                name="relationship"
+                control={control}
+                render={({ field }) => (
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger className="rounded-xl h-12">
+                      <SelectValue placeholder="Select relationship" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {LOVED_ONE_RELATIONSHIPS.map((r) => (
+                        <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+            )}
+            {errors.relationship && (
+              <p className="text-caption text-destructive">{errors.relationship.message}</p>
             )}
           </div>
 
@@ -168,8 +201,7 @@ export default function AddLovedOne() {
             <Label>When you first met</Label>
             <Input
               type="date"
-              value={form.met_date}
-              onChange={(e) => setForm(prev => ({ ...prev, met_date: e.target.value }))}
+              {...register('met_date')}
               className="rounded-xl h-12"
             />
             <p className="text-caption">Even just the year is enough</p>
@@ -183,10 +215,12 @@ export default function AddLovedOne() {
             <Input
               type="email"
               placeholder="Their email or a guardian's"
-              value={form.email}
-              onChange={(e) => setForm(prev => ({ ...prev, email: e.target.value }))}
+              {...register('email')}
               className="rounded-xl h-12"
             />
+            {errors.email && (
+              <p className="text-caption text-destructive">{errors.email.message}</p>
+            )}
             <p className="text-caption">Needed for scheduled deliveries. Use a guardian&apos;s email for children.</p>
           </div>
 
@@ -194,8 +228,7 @@ export default function AddLovedOne() {
             <Label>Date of birth</Label>
             <Input
               type="date"
-              value={form.date_of_birth}
-              onChange={(e) => setForm(prev => ({ ...prev, date_of_birth: e.target.value }))}
+              {...register('date_of_birth')}
               className="rounded-xl h-12"
             />
           </div>
@@ -204,8 +237,7 @@ export default function AddLovedOne() {
             <Label>Cover message</Label>
             <Textarea
               placeholder="What makes them special…"
-              value={form.personal_notes}
-              onChange={(e) => setForm(prev => ({ ...prev, personal_notes: e.target.value }))}
+              {...register('personal_notes')}
               className="rounded-xl min-h-[100px] resize-none text-body"
             />
             <p className="text-caption">Shown on their profile — a few heartfelt words</p>
@@ -214,7 +246,7 @@ export default function AddLovedOne() {
 
         <Button
           type="submit"
-          disabled={!form.name || !form.relationship || createMutation.isPending}
+          disabled={isSubmitting || createMutation.isPending}
           className="w-full h-12 rounded-xl gap-2"
         >
           <Heart className="w-4 h-4" />

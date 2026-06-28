@@ -11,10 +11,11 @@ import EmptyState from '../components/shared/EmptyState';
 import MemoryDetailSkeleton from '../components/memory/MemoryDetailSkeleton';
 import { MemoryMediaPreview, MemoryMetaChips } from '../components/memory/MemoryMedia';
 import { format } from 'date-fns';
-import { Tag, Clock, Heart, MapPin, Pencil, Trash2 } from 'lucide-react';
+import { Tag, Clock, Heart, MapPin, Pencil, Trash2, Check, X } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
+import { toast } from 'sonner';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel,
   AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
@@ -60,6 +61,34 @@ export default function MemoryDetail() {
       return data?.memory || null;
     },
     enabled: !!id,
+  });
+
+  // Pending share for this memory addressed to the current user
+  const { data: pendingShare } = useQuery({
+    queryKey: ['pendingShare', id, currentUser?.id],
+    queryFn: () => base44.entities.MemoryShare.filter({ memory_id: id, status: 'pending' }),
+    select: (shares) => shares?.[0] ?? null,
+    enabled: !!id && !!currentUser?.id && !isLoading,
+  });
+
+  const acceptShareMutation = useMutation({
+    mutationFn: (shareId) => base44.entities.MemoryShare.update(shareId, { status: 'accepted' }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['pendingShare', id] });
+      queryClient.invalidateQueries({ queryKey: ['memoryShares'] });
+      queryClient.invalidateQueries({ queryKey: ['pendingShares'] });
+      toast.success('Memory added to your timeline');
+    },
+  });
+
+  const rejectShareMutation = useMutation({
+    mutationFn: (shareId) => base44.entities.MemoryShare.update(shareId, { status: 'rejected' }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['pendingShare', id] });
+      queryClient.invalidateQueries({ queryKey: ['memoryShares'] });
+      queryClient.invalidateQueries({ queryKey: ['pendingShares'] });
+      navigate(-1);
+    },
   });
 
   if (isLoading) {
@@ -133,6 +162,47 @@ export default function MemoryDetail() {
         transition={{ duration: 0.4, ease: [0, 0, 0.2, 1] }}
         className="page-sections pb-8"
       >
+        {/* Pending share banner — shown to recipient before they accept */}
+        {pendingShare && !isOwner && (
+          <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}>
+            <KeepsakeCard className="border-primary/20 bg-primary/5">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                  <Heart className="w-5 h-5 text-primary" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-body font-semibold text-primary">
+                    {pendingShare.from_user_name || 'Someone'} shared this with you
+                  </p>
+                  <p className="text-caption mt-0.5">
+                    Accept to add it to your Shared With You timeline
+                  </p>
+                </div>
+              </div>
+              <div className="flex gap-2 mt-3">
+                <Button
+                  size="sm"
+                  onClick={() => acceptShareMutation.mutate(pendingShare.id)}
+                  disabled={acceptShareMutation.isPending}
+                  className="rounded-xl gap-1.5 flex-1"
+                >
+                  <Check className="w-3.5 h-3.5" />
+                  {acceptShareMutation.isPending ? 'Accepting…' : 'Accept'}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => rejectShareMutation.mutate(pendingShare.id)}
+                  disabled={rejectShareMutation.isPending}
+                  className="rounded-xl text-destructive hover:text-destructive hover:bg-destructive/10 px-3"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </Button>
+              </div>
+            </KeepsakeCard>
+          </motion.div>
+        )}
+
         {/* Hero media */}
         {(memory.memory_type === 'photo' || memory.memory_type === 'video') && memory.media_url && (
           <motion.div {...sectionMotion}>

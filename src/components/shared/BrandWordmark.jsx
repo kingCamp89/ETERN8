@@ -9,16 +9,16 @@ const sizeClasses = {
 };
 
 /**
- * ETRN8 logotype — Cinzel with rose → blush → gold gradient.
+ * ETERN8 logotype — Cinzel with rose → blush → gold gradient.
  * The "8" is styled as the signature brand mark.
  */
 export default function BrandWordmark({ size = 'md', className, as: Component = 'span' }) {
   return (
     <Component
       className={cn('brand-wordmark', sizeClasses[size], className)}
-      aria-label="ETRN8"
+      aria-label="ETERN8"
     >
-      <span className="brand-wordmark-letters" aria-hidden="true">ETRN</span>
+      <span className="brand-wordmark-letters" aria-hidden="true">ETERN</span>
       <span className="brand-wordmark-eight" aria-hidden="true">8</span>
     </Component>
   );

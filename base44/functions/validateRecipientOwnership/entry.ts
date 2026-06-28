@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { requireInternalSecret, stripInternalSecret } from '../_shared/internalAuth.ts';
 
 /**
  * validateRecipientOwnership — ensures each recipient only receives content
@@ -17,9 +18,12 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
  */
 Deno.serve(async (req) => {
   try {
-    const base44 = createClientFromRequest(req);
     const body = await req.json();
-    const { user_id, recipient_id, memories, notes } = body;
+    const authError = requireInternalSecret(req, body);
+    if (authError) return authError;
+
+    const base44 = createClientFromRequest(req);
+    const { user_id, recipient_id, memories, notes } = stripInternalSecret(body);
 
     if (!user_id || !recipient_id) {
       return Response.json({ valid: false, reason: 'Missing user_id or recipient_id' }, { status: 400 });

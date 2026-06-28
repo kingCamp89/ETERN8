@@ -16,8 +16,8 @@ const categories = [
     title: 'Getting Started',
     items: [
       {
-        q: 'What is ETRN8?',
-        a: 'ETRN8 is a digital time capsule that helps you preserve memories, messages, photos, and voice recordings for the people you love. You can create profiles for family members, write memories for specific occasions, and even schedule messages to be delivered in the future.',
+        q: 'What is ETERN8?',
+        a: 'ETERN8 is a digital time capsule that helps you preserve memories, messages, photos, and voice recordings for the people you love. You can create profiles for family members, write memories for specific occasions, and even schedule messages to be delivered in the future.',
       },
       {
         q: 'How do I create my first memory?',
@@ -42,7 +42,11 @@ const categories = [
       },
       {
         q: 'Are my private memories visible to others?',
-        a: 'No. You can mark any memory as private, and it will only be visible to you. Even in legacy delivery, you choose which memories to include.',
+        a: 'No. Turn on "Keep this memory private" when creating or editing a memory. Private memories are only visible to you — they cannot be shared, scheduled for delivery, or included in legacy release.',
+      },
+      {
+        q: 'What are private notes?',
+        a: 'Private notes are separate from memories — short writings only you can read. Find them in Settings → Private Notes, or from a loved one\'s profile. If legacy delivery is enabled, notes can be released to the person they are about after the verification process.',
       },
       {
         q: 'How are my photos and videos stored?',
@@ -72,7 +76,7 @@ const categories = [
     items: [
       {
         q: 'What is Legacy Mode?',
-        a: 'Legacy Mode ensures that your most important messages and memories reach your loved ones even if you pass away unexpectedly. You choose which memories to include and designate trusted contacts who can initiate the delivery process.',
+        a: 'Legacy Mode ensures your undelivered memories reach the people you intended if you pass away unexpectedly. When enabled, all undelivered memories with recipients are automatically included — you do not need to mark each one individually. Private memories are always excluded.',
       },
       {
         q: 'How does the posthumous delivery process work?',
@@ -101,15 +105,19 @@ const categories = [
       },
       {
         q: 'Who can access my memories?',
-        a: 'Only you can access your memories while your account is active. No ETRN8 employee can view your content. In legacy mode, only designated recipients receive the memories you chose for them.',
+        a: 'Only you can access your memories while your account is active. No ETERN8 employee can view your content. In legacy mode, only designated recipients receive the memories you chose for them.',
       },
       {
         q: 'What happens to my data if I cancel my subscription?',
-        a: 'Your data is preserved for 90 days after cancellation. If you resubscribe within that period, everything will be as you left it.',
+        a: 'Canceling Premium does not delete your account or memories. Your data stays on your account unless you delete it yourself. To permanently remove everything immediately, use Settings → Delete Account.',
+      },
+      {
+        q: 'Can I delete my account and all my data?',
+        a: 'Yes. Go to Settings → Delete Account. This permanently removes your memories, loved ones, groups, legacy settings, friendships, notifications, and uploaded media immediately. This cannot be undone.',
       },
       {
         q: 'Can I export or download my data?',
-        a: 'Premium subscribers can export memories as a printable memory book. Additional export formats are planned.',
+        a: 'Go to Settings → Export my data to download a ZIP with your full account data (JSON), printable memory stories with quoted messages, and a media guide for voice and video files. Per-person PDFs are also available from profile and memory book pages.',
       },
     ],
   },
@@ -118,11 +126,11 @@ const categories = [
     items: [
       {
         q: 'How do I upgrade to Premium?',
-        a: 'Go to Settings → Subscription and tap Upgrade to Premium. You\'ll be guided through a secure checkout process.',
+        a: 'Open Settings → Subscription to compare plans. Secure paid checkout via Stripe is not available yet — Premium billing will be enabled in a future update.',
       },
       {
         q: 'Can I cancel anytime?',
-        a: 'Yes. Cancel Premium at any time and keep access until the end of your current billing period.',
+        a: 'When Premium billing is available, you will be able to cancel anytime and keep access until the end of your billing period. Your memories are not deleted when a subscription ends.',
       },
       {
         q: 'Is there a family plan?',
@@ -130,7 +138,7 @@ const categories = [
       },
       {
         q: 'What payment methods do you accept?',
-        a: 'We accept major credit and debit cards through Stripe.',
+        a: 'When billing launches, we plan to accept major credit and debit cards through Stripe. Checkout is not yet available in the app.',
       },
     ],
   },

@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Heart, MessageCircle, Send, Smile, MoreHorizontal } from 'lucide-react';
+import { Heart, MessageCircle, Send } from 'lucide-react';
 import SafeImage from '@/components/shared/SafeImage';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
@@ -25,7 +25,10 @@ export default function MemoryInteractions({ memoryId, compact }) {
 
   const { data: interactions = [] } = useQuery({
     queryKey: ['memoryInteractions', memoryId],
-    queryFn: () => base44.entities.MemoryInteraction.filter({ memory_id: memoryId }, '-created_date', 100),
+    queryFn: async () => {
+      const { data } = await base44.functions.invoke('getMemoryInteractions', { memoryId });
+      return data?.interactions || [];
+    },
     enabled: !!memoryId,
   });
 

@@ -193,7 +193,7 @@ function drawFooter(doc, c, pageW, pageH, creatorName) {
   doc.setTextColor(...c.textSoft);
   doc.setFont('times', 'italic');
   doc.setFontSize(7);
-  doc.text('Created with ETRN8', pageW / 2, pageH - 10, { align: 'center' });
+  doc.text('Created with ETERN8', pageW / 2, pageH - 10, { align: 'center' });
 }
 
 function sanitizeFilename(name) {
@@ -460,7 +460,7 @@ async function drawMemoryPage(doc, c, pageW, pageH, memory, person, pageNum) {
     doc.setTextColor(...c.textSoft);
     doc.setFont('times', 'italic');
     doc.setFontSize(9);
-    const voiceNote = 'A voice message is preserved with this memory and can be listened to in the ETRN8 app.';
+    const voiceNote = 'A voice message is preserved with this memory and can be listened to in the ETERN8 app.';
     const voiceLines = doc.splitTextToSize(voiceNote, contentW - 24);
     voiceLines.forEach((line, i) => {
       doc.text(line, MARGIN + 10, y + 19 + i * 5);

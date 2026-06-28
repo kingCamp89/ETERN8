@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import useLovedOnes from '../hooks/useLovedOnes';
@@ -18,28 +18,22 @@ export default function Search() {
   const [selectedPerson, setSelectedPerson] = useState('');
   const [showFilters, setShowFilters] = useState(false);
 
-  const { data: memories = [] } = useQuery({
-    queryKey: ['memories'],
+  const { data: lovedOnes = [] } = useLovedOnes();
+
+  const { data, isLoading, isFetching } = useQuery({
+    queryKey: ['searchMemories', query, selectedEmotion, selectedPerson],
     queryFn: async () => {
-      const me = await base44.auth.me();
-      return base44.entities.Memory.filter({ created_by_id: me.id }, '-created_date');
+      const res = await base44.functions.invoke('searchMemories', {
+        query,
+        emotion: selectedEmotion || undefined,
+        loved_one_id: selectedPerson || undefined,
+      });
+      return res?.data ?? { memories: [], total: 0, hasAnyMemories: false };
     },
   });
 
-  const { data: lovedOnes = [] } = useLovedOnes();
-
-  const filteredMemories = useMemo(() => {
-    return memories.filter(m => {
-      const matchesQuery = !query ||
-        m.title?.toLowerCase().includes(query.toLowerCase()) ||
-        m.content?.toLowerCase().includes(query.toLowerCase()) ||
-        m.loved_one_name?.toLowerCase().includes(query.toLowerCase()) ||
-        m.tags?.some(t => t.toLowerCase().includes(query.toLowerCase()));
-      const matchesEmotion = !selectedEmotion || m.emotion === selectedEmotion;
-      const matchesPerson = !selectedPerson || m.loved_one_id === selectedPerson;
-      return matchesQuery && matchesEmotion && matchesPerson;
-    });
-  }, [memories, query, selectedEmotion, selectedPerson]);
+  const filteredMemories = data?.memories ?? [];
+  const hasAnyMemories = data?.hasAnyMemories ?? false;
 
   const clearFilters = () => {
     setSelectedEmotion('');
@@ -48,6 +42,7 @@ export default function Search() {
   };
 
   const hasFilters = !!query || !!selectedEmotion || !!selectedPerson;
+  const searching = isLoading || isFetching;
 
   return (
     <div className="min-h-screen">
@@ -147,16 +142,22 @@ export default function Search() {
 
         <div>
           <p className="text-caption mb-3 px-1">
-            {filteredMemories.length} {filteredMemories.length === 1 ? 'memory' : 'memories'} found
+            {searching
+              ? 'Searching…'
+              : `${filteredMemories.length} ${filteredMemories.length === 1 ? 'memory' : 'memories'} found`}
           </p>
 
-          {filteredMemories.length > 0 ? (
+          {searching && filteredMemories.length === 0 ? (
+            <div className="flex justify-center py-12">
+              <div className="w-6 h-6 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+            </div>
+          ) : filteredMemories.length > 0 ? (
             <div className="space-y-3">
               {filteredMemories.map((memory, i) => (
                 <MemoryCard key={memory.id} memory={memory} index={i} />
               ))}
             </div>
-          ) : memories.length > 0 ? (
+          ) : hasAnyMemories ? (
             <EmptyState
               prompt="What moment do you never want to forget?"
               subtitle="Try adjusting your search or filters."

@@ -113,15 +113,15 @@
     "role"
   ],
   "rls": {
-    "create": {},
+    "create": false,
     "read": {
       "user_id": "{{user.id}}"
     },
     "update": {
-      "created_by_id": "{{user.id}}"
+      "user_id": "{{user.id}}"
     },
     "delete": {
-      "created_by_id": "{{user.id}}"
+      "user_id": "{{user.id}}"
     }
   }
 }

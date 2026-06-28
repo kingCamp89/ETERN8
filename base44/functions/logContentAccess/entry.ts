@@ -39,7 +39,7 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Invalid content_type' }, { status: 400 });
     }
 
-    await base44.entities.LegacyAuditLog.create({
+    await base44.asServiceRole.entities.LegacyAuditLog.create({
       user_id: user.id,
       event_type,
       content_type,

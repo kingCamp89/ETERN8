@@ -29,11 +29,12 @@ Deno.serve(async (req) => {
     }
 
     // ── Check 2: Direct share (user-scoped MemoryShare, scoped by ID + user) ──
+    // Allow pending shares too — recipients should be able to preview before accepting.
     const shares = await base44.entities.MemoryShare.filter({
       memory_id: memoryId,
       to_user_id: user.id,
-      status: 'accepted',
     });
+    const activeShare = shares.find((s) => s.status === 'accepted' || s.status === 'pending' || s.status === 'tagged');
 
     // ── Fetch the memory once via service-role for remaining checks ──
     const allMemories = await base44.asServiceRole.entities.Memory.filter({ id: memoryId });
@@ -43,8 +44,12 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Memory not found' }, { status: 404 });
     }
 
-    // Direct share access already confirmed
-    if (shares.length) {
+    if (memory.is_private && memory.created_by_id !== user.id) {
+      return Response.json({ error: 'Memory not found or access denied' }, { status: 404 });
+    }
+
+    // Direct share access confirmed (pending, accepted, or tagged)
+    if (activeShare) {
       return Response.json({ memory });
     }
 

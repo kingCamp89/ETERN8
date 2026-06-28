@@ -48,7 +48,7 @@ Deno.serve(async (req) => {
     const expiresAt = addDays(new Date(), TOKEN_EXPIRY_DAYS).toISOString();
 
     // Create executor with PENDING status
-    const executor = await base44.entities.Executor.create({
+    const executor = await base44.asServiceRole.entities.Executor.create({
       user_id: user.id,
       full_name,
       email,
@@ -72,11 +72,11 @@ Deno.serve(async (req) => {
     try {
       await base44.asServiceRole.integrations.Core.SendEmail({
         to: email,
-        subject: `${userName} has designated you as their legacy executor on ETRN8`,
+        subject: `${userName} has designated you as their legacy executor on ETERN8`,
         body: [
           `Dear ${full_name},`,
           '',
-          `${userName} has designated you as their legacy executor on ETRN8.`,
+          `${userName} has designated you as their legacy executor on ETERN8.`,
           '',
           'As an executor, you will be the final safeguard before any legacy memories are released.',
           'You may be asked to approve, pause, or cancel the release process.',
@@ -90,7 +90,7 @@ Deno.serve(async (req) => {
           'If you do not wish to accept this role, you can simply ignore this email.',
           '',
           'With care,',
-          'The ETRN8 Team',
+          'The ETERN8 Team',
         ].join('\n'),
       });
       emailSent = true;

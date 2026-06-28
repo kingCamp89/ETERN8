@@ -53,6 +53,11 @@
       ],
       "description": "Recipient's added emotion"
     },
+    "memory_type": {
+      "type": "string",
+      "enum": ["text", "photo", "voice", "video"],
+      "description": "Type of the shared memory (denormalized for display)"
+    },
     "shared_at": {
       "type": "string",
       "format": "date-time",
@@ -65,7 +70,7 @@
     "to_user_id"
   ],
   "rls": {
-    "create": {},
+    "create": false,
     "read": {
       "to_user_id": "{{user.id}}"
     },

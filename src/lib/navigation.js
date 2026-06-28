@@ -12,6 +12,7 @@ const TAB_ROOT_RULES = [
       p.startsWith('/our-story') ||
       p.startsWith('/legacy') ||
       p.startsWith('/future-deliveries') ||
+      p.startsWith('/private-notes') ||
       p.startsWith('/memory-books') ||
       p.startsWith('/search') ||
       p.startsWith('/shared'),

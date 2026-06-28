@@ -11,7 +11,7 @@ export default function Logo({ size = 'md', className = '' }) {
       <div className="relative w-full h-full logo-shimmer logo-glow-pulse rounded-xl">
         <img
           src="https://media.base44.com/images/public/6a2b2ffd9f4e986100520d9a/9f5a60cea_generated_image.png"
-          alt="ETRN8"
+          alt="ETERN8"
           className="w-full h-full object-contain rounded-xl"
         />
       </div>

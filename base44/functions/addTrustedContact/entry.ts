@@ -48,7 +48,7 @@ Deno.serve(async (req) => {
     const expiresAt = addDays(new Date(), TOKEN_EXPIRY_DAYS).toISOString();
 
     // Create contact with PENDING status
-    const contact = await base44.entities.TrustedContact.create({
+    const contact = await base44.asServiceRole.entities.TrustedContact.create({
       name,
       email,
       phone: phone || null,
@@ -57,6 +57,7 @@ Deno.serve(async (req) => {
       is_verified: false,
       verification_token_hash: tokenHash,
       verification_token_expires_at: expiresAt,
+      created_by_id: user.id,
     });
 
     // Send verification email
@@ -68,11 +69,11 @@ Deno.serve(async (req) => {
     try {
       await base44.asServiceRole.integrations.Core.SendEmail({
         to: email,
-        subject: `${userName} has designated you as a trusted contact on ETRN8`,
+        subject: `${userName} has designated you as a trusted contact on ETERN8`,
         body: [
           `Dear ${name},`,
           '',
-          `${userName} has designated you as a trusted contact on ETRN8.`,
+          `${userName} has designated you as a trusted contact on ETERN8.`,
           '',
           'As a trusted contact, you may be asked to verify their wellbeing in the future.',
           '',
@@ -85,7 +86,7 @@ Deno.serve(async (req) => {
           'If you do not wish to accept this role, you can simply ignore this email.',
           '',
           'With care,',
-          'The ETRN8 Team',
+          'The ETERN8 Team',
         ].join('\n'),
       });
       emailSent = true;

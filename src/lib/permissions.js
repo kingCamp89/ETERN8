@@ -1,5 +1,5 @@
 /**
- * Centralized permission helpers for ETRN8.
+ * Centralized permission helpers for ETERN8.
  * Every page, API call, and service-role function must use these.
  * 
  * Principle: FAIL CLOSED. If permission is unclear, deny access.

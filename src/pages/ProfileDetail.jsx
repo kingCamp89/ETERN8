@@ -6,14 +6,14 @@ import PageHeader from '../components/shared/PageHeader';
 import MemoryCard from '../components/shared/MemoryCard';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Plus, Calendar, FileText, Image, Mic, Video, Pencil, BookOpen, Download, Heart } from 'lucide-react';
+import { Plus, Calendar, FileText, Image, Mic, Video, Pencil, BookOpen, Download, Heart, NotebookPen } from 'lucide-react';
 import ProfileAvatar from '../components/shared/ProfileAvatar';
 import KeepsakeCard from '../components/shared/KeepsakeCard';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
 import ProfileDetailSkeleton from '../components/profile/ProfileDetailSkeleton';
 import { generateMemoryStoryPDF } from '../lib/generateMemoryStoryPDF';
 import { motion } from 'framer-motion';
-import { format, differenceInYears } from 'date-fns';
+import { differenceInYears } from 'date-fns';
 import { applyTheme, getGlobalTheme } from '../lib/themes';
 import EditProfileDialog from '../components/profile/EditProfileDialog';
 import EmptyState from '../components/shared/EmptyState';
@@ -228,6 +228,11 @@ export default function ProfileDetail() {
           <Link to={`/create?for=${id}`}>
             <Button className="rounded-xl gap-2" size="sm">
               <Plus className="w-4 h-4" /> Add Memory
+            </Button>
+          </Link>
+          <Link to={`/private-notes?about=${id}&new=1`}>
+            <Button variant="outline" size="sm" className="rounded-xl gap-2">
+              <NotebookPen className="w-3.5 h-3.5" /> Private Note
             </Button>
           </Link>
           {memories.length > 0 && (

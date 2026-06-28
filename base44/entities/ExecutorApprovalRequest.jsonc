@@ -57,7 +57,7 @@
     "status"
   ],
   "rls": {
-    "create": {},
+    "create": false,
     "read": {
       "user_id": "{{user.id}}"
     },

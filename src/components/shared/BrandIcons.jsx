@@ -1,4 +1,4 @@
-// ETRN8 brand icon set — elegant line-art icons with coral-to-rose gradient.
+// ETERN8 brand icon set — elegant line-art icons with coral-to-rose gradient.
 // Matches the brand guide: medium-weight monoline strokes, rounded corners.
 
 function BrandIcon({ children, className = 'w-5 h-5', strokeWidth = 1.8 }) {

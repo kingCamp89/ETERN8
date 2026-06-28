@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import usePullToRefresh from '../hooks/usePullToRefresh';
 import { base44 } from '@/api/base44Client';
@@ -17,6 +18,10 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 
 export default function Friends() {
+  const [searchParams] = useSearchParams();
+  const [activeTab, setActiveTab] = useState(() => (
+    searchParams.get('tab') === 'requests' ? 'requests' : 'friends'
+  ));
   const [showUsernameSetup, setShowUsernameSetup] = useState(false);
   const [newUsername, setNewUsername] = useState('');
   const queryClient = useQueryClient();
@@ -87,7 +92,7 @@ export default function Friends() {
           </KeepsakeCard>
         )}
 
-        <Tabs defaultValue="friends">
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="w-full bg-secondary/50 rounded-xl h-10 mb-1">
             <TabsTrigger value="friends" className="rounded-lg text-caption flex-1">My Friends</TabsTrigger>
             <TabsTrigger value="requests" className="rounded-lg text-caption flex-1 relative">

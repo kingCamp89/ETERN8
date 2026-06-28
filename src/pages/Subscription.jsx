@@ -2,7 +2,7 @@ import { useState } from 'react';
 import PageHeader from '../components/shared/PageHeader';
 import KeepsakeCard from '../components/shared/KeepsakeCard';
 import { Button } from '@/components/ui/button';
-import { Check, Crown, X, Shield, Clock } from 'lucide-react';
+import { Check, Crown, X, Shield, Sparkles } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const features = [
@@ -17,25 +17,29 @@ const features = [
   { name: 'Advanced search & filters', free: false, premium: true },
   { name: 'Unlimited tags & emotions', free: false, premium: true },
   { name: 'Priority support', free: false, premium: true },
-  { name: 'Data export', free: false, premium: true },
+  { name: 'Data export', free: true, premium: true },
 ];
 
 const faqs = [
   {
+    q: 'Is Premium billing available yet?',
+    a: 'Not yet. You can compare plans here, but secure checkout via Stripe is not live. Premium billing will be enabled in a future update.',
+  },
+  {
+    q: 'Can I use Premium features now?',
+    a: 'Yes. While billing is being set up, all features are available on your account at no charge. Planned limits shown below are not enforced yet.',
+  },
+  {
     q: 'Can I switch plans anytime?',
-    a: 'Yes. You can upgrade to Premium or downgrade to Free at any time. If you downgrade, Premium features remain accessible until the end of your current billing period.',
+    a: 'When billing launches, you will be able to upgrade or downgrade at any time. If you downgrade, Premium features will remain accessible until the end of your current billing period.',
   },
   {
-    q: 'What happens to my data if I downgrade?',
-    a: 'All your data is preserved. Premium-only content like voice recordings and videos remain stored but become inaccessible. You can access them again anytime by upgrading back to Premium.',
+    q: 'What happens to my data if I cancel Premium?',
+    a: 'Canceling Premium will not delete your account or memories. Your data stays on your account unless you delete it yourself. To permanently remove everything, use Settings → Delete Account.',
   },
   {
-    q: 'Is there a free trial?',
-    a: 'We offer a 14-day free trial of Premium, so you can explore all features before committing. No credit card required for the trial.',
-  },
-  {
-    q: 'How does billing work?',
-    a: 'Billing is handled securely through Stripe. You can choose monthly or yearly billing. Yearly plans save you 17% compared to monthly.',
+    q: 'How will billing work?',
+    a: 'We plan to use Stripe for secure monthly or yearly billing. Yearly plans are planned to save about 17% compared to monthly.',
   },
 ];
 
@@ -44,7 +48,7 @@ export default function Subscription() {
 
   return (
     <div className="min-h-screen">
-      <PageHeader title="Subscription" subtitle="Choose the plan that's right for you" showBack />
+      <PageHeader title="Subscription" subtitle="Compare plans — billing coming soon" showBack />
 
       <motion.div
         initial={{ opacity: 0, y: 12 }}
@@ -52,6 +56,13 @@ export default function Subscription() {
         transition={{ duration: 0.35 }}
         className="page-sections pb-8"
       >
+        <KeepsakeCard className="bg-primary/5 border-primary/20">
+          <p className="text-body text-muted-foreground leading-relaxed">
+            <strong className="text-foreground">Early access:</strong> Premium checkout is not available yet.
+            All features are currently included at no charge while we finish Stripe billing.
+          </p>
+        </KeepsakeCard>
+
         <div className="flex items-center justify-center gap-3">
           <span className={`text-body ${!yearly ? 'font-semibold' : 'text-muted-foreground'}`}>Monthly</span>
           <button
@@ -103,10 +114,12 @@ export default function Subscription() {
                 <p className="text-caption text-primary mb-1">Billed yearly at $99.50</p>
               )}
               <p className="text-body text-muted-foreground mb-4">Everything you need to preserve a lifetime of memories</p>
-              <Button className="w-full rounded-xl">
-                Start free trial
+              <Button className="w-full rounded-xl" variant="secondary" disabled>
+                Coming soon
               </Button>
-              <p className="text-center text-caption text-muted-foreground mt-2">14-day free trial. No credit card needed.</p>
+              <p className="text-center text-caption text-muted-foreground mt-2">
+                Secure checkout via Stripe will be available in a future update.
+              </p>
             </div>
           </KeepsakeCard>
         </div>
@@ -152,9 +165,9 @@ export default function Subscription() {
             <p className="text-caption">No lock-in contracts</p>
           </KeepsakeCard>
           <KeepsakeCard className="text-center py-4">
-            <Clock className="w-5 h-5 text-primary mx-auto mb-1" />
-            <p className="text-body font-medium">14-day trial</p>
-            <p className="text-caption">No credit card needed</p>
+            <Sparkles className="w-5 h-5 text-primary mx-auto mb-1" />
+            <p className="text-body font-medium">Early access</p>
+            <p className="text-caption">All features included for now</p>
           </KeepsakeCard>
         </div>
 

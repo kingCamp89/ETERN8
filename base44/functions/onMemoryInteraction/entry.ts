@@ -1,18 +1,25 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { requireInternalSecret, stripInternalSecret } from '../_shared/internalAuth.ts';
 
+/**
+ * Legacy webhook handler for MemoryInteraction entity events.
+ * Notifications are created by createMemoryInteraction; this endpoint is
+ * internal-only so unauthenticated callers cannot forge notifications.
+ */
 Deno.serve(async (req) => {
   try {
-    const base44 = createClientFromRequest(req);
-
     const body = await req.json();
-    const event = body.event;
-    const interaction = body.data;
+    const authError = requireInternalSecret(req, body);
+    if (authError) return authError;
+
+    const base44 = createClientFromRequest(req);
+    const payload = stripInternalSecret(body);
+    const interaction = payload.data;
 
     if (!interaction || !interaction.memory_id) {
       return Response.json({ skipped: 'no memory_id' });
     }
 
-    // Get the memory to find the owner
     const memories = await base44.asServiceRole.entities.Memory.filter({ id: interaction.memory_id });
     const memory = memories[0];
 
@@ -23,7 +30,6 @@ Deno.serve(async (req) => {
     const interactionCreator = interaction.created_by_id;
     const memoryOwner = memory.created_by_id;
 
-    // Don't notify yourself
     if (interactionCreator === memoryOwner) {
       return Response.json({ skipped: 'own memory' });
     }
@@ -42,7 +48,6 @@ Deno.serve(async (req) => {
       return Response.json({ skipped: 'unknown type' });
     }
 
-    // Create notification for the memory owner
     await base44.asServiceRole.entities.Notification.create({
       type: interactionType,
       message,

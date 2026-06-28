@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useState, useEffect, useRef } from 'react';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import PageHeader from '@/components/shared/PageHeader';
@@ -9,7 +9,7 @@ import LoadingSpinner from '@/components/shared/LoadingSpinner';
 import MemoryInteractions from '@/components/shared/MemoryInteractions';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Users, UserPlus, Share2, MessageCircle, CalendarDays, ChevronRight, LogIn, Trash2, BookOpen, X, Camera } from 'lucide-react';
+import { Users, UserPlus, Share2, MessageCircle, CalendarDays, ChevronRight, LogIn, Trash2, BookOpen, X, Camera, Link2 } from 'lucide-react';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -27,6 +27,9 @@ import SafeImage from '@/components/shared/SafeImage';
 export default function GroupDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const inviteToken = searchParams.get('invite');
+  const joinAttempted = useRef(false);
   const [showInvite, setShowInvite] = useState(false);
   const [selectedFriends, setSelectedFriends] = useState([]);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
@@ -85,11 +88,37 @@ export default function GroupDetail() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['groupDetail', id] });
+      queryClient.invalidateQueries({ queryKey: ['myGroups'] });
       setShowInvite(false);
       setSelectedFriends([]);
       toast.success(`${selectedFriends.length} friend(s) added`);
     },
     onError: () => toast.error('Failed to add members')
+  });
+
+  const joinMutation = useMutation({
+    mutationFn: () => base44.functions.invoke('joinCircle', { groupId: id, inviteToken }),
+    onSuccess: (res) => {
+      queryClient.invalidateQueries({ queryKey: ['groupDetail', id] });
+      queryClient.invalidateQueries({ queryKey: ['myGroups'] });
+      const next = new URLSearchParams(searchParams);
+      next.delete('invite');
+      setSearchParams(next, { replace: true });
+      toast.success(res?.data?.alreadyMember ? 'You are already in this circle' : 'Welcome to the circle!');
+    },
+    onError: () => toast.error('Invalid or expired invite link'),
+  });
+
+  const copyInviteMutation = useMutation({
+    mutationFn: () => base44.functions.invoke('generateCircleInvite', { groupId: id }),
+    onSuccess: async (res) => {
+      const link = res?.data?.inviteLink;
+      if (link) {
+        await navigator.clipboard.writeText(link);
+        toast.success('Invite link copied');
+      }
+    },
+    onError: () => toast.error('Could not generate invite link'),
   });
 
   const removeMutation = useMutation({
@@ -147,7 +176,7 @@ export default function GroupDetail() {
     await base44.entities.MemoryGroup.update(group.id, { group_photo_url: file_url });
     queryClient.invalidateQueries({ queryKey: ['groupDetail', id] });
     queryClient.invalidateQueries({ queryKey: ['myGroups'] });
-    toast.success('Group photo updated');
+    toast.success('Circle photo updated');
     setUploadingPhoto(false);
     e.target.value = '';
   };
@@ -202,6 +231,15 @@ export default function GroupDetail() {
     });
   };
 
+  useEffect(() => {
+    if (!inviteToken || !user || !group || joinAttempted.current) return;
+    const alreadyMember = group.created_by_id === user.id || group.member_ids?.includes(user.id);
+    if (!alreadyMember) {
+      joinAttempted.current = true;
+      joinMutation.mutate();
+    }
+  }, [inviteToken, user, group]);
+
   // Filter out existing members from friends list
   const existingMemberIds = new Set([...(group?.member_ids || []), group?.created_by_id]);
 
@@ -255,10 +293,24 @@ export default function GroupDetail() {
             <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
               <LogIn className="w-5 h-5 text-primary" />
             </div>
-            <div>
-              <p className="text-body font-medium">You're not in this circle</p>
-              <p className="text-caption">Ask a member to add you to see shared memories</p>
+            <div className="flex-1 min-w-0">
+              <p className="text-body font-medium">You&apos;re not in this circle</p>
+              <p className="text-caption">
+                {inviteToken
+                  ? 'Use the invite link to join, or ask a member to add you.'
+                  : 'Ask a member for an invite link to join.'}
+              </p>
             </div>
+            {inviteToken && (
+              <Button
+                size="sm"
+                onClick={() => joinMutation.mutate()}
+                disabled={joinMutation.isPending}
+                className="rounded-xl shrink-0"
+              >
+                {joinMutation.isPending ? 'Joining…' : 'Join'}
+              </Button>
+            )}
           </KeepsakeCard>
         </div>
       )}
@@ -665,6 +717,18 @@ export default function GroupDetail() {
               <UserPlus className="w-4 h-4" />
               {addMembersMutation.isPending ? 'Adding...' : `Add ${selectedFriends.length} Friend(s)`}
             </Button>
+            {group?.created_by_id === user?.id && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => copyInviteMutation.mutate()}
+                disabled={copyInviteMutation.isPending}
+                className="w-full rounded-xl gap-2"
+              >
+                <Link2 className="w-4 h-4" />
+                {copyInviteMutation.isPending ? 'Generating…' : 'Copy invite link'}
+              </Button>
+            )}
           </div>
         </DialogContent>
       </Dialog>
